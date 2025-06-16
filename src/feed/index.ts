@@ -4,7 +4,7 @@ import {
   NextImageSize,
 } from '@/platforms/next-image';
 
-export const FEED_PHOTO_REQUEST_LIMIT = 40;
+export const FEED_PHOTO_REQUEST_LIMIT = 400;
 
 export const FEED_PHOTO_WIDTH_SMALL = 200;
 export const FEED_PHOTO_WIDTH_MEDIUM = 640;

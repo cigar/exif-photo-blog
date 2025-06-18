@@ -85,8 +85,9 @@ export const createPhotoAction = async (formData: FormData) =>
     }
   });
 
-export const addAllUploadsAction = async ({
+export const addUploadsAction = async ({
   uploadUrls,
+  uploadTitles,
   tags,
   favorite,
   hidden,
@@ -95,6 +96,7 @@ export const addAllUploadsAction = async ({
   shouldRevalidateAllKeysAndPaths = true,
 }: {
   uploadUrls: string[]
+  uploadTitles: string[]
   tags?: string
   favorite?: string
   hidden?: string
@@ -124,8 +126,9 @@ export const addAllUploadsAction = async ({
 
     (async () => {
       try {
-        for (const url of uploadUrls) {
+        for (const [index, url] of uploadUrls.entries()) {
           currentUploadUrl = url;
+          const title = uploadTitles[index];
           progress = 0;
           streamUpdate('Parsing EXIF data');
 
@@ -146,18 +149,22 @@ export const addAllUploadsAction = async ({
             }
 
             const {
-              title,
+              title: aiTitle,
               caption,
               tags: aiTags,
               semanticDescription,
             } = await generateAiImageQueries(
               imageResizedBase64,
-              AI_TEXT_AUTO_GENERATED_FIELDS,
+              Boolean(title)
+                ? AI_TEXT_AUTO_GENERATED_FIELDS
+                  .filter(field => field !== 'title')
+                : AI_TEXT_AUTO_GENERATED_FIELDS,
+              title,
             );
 
             const form: Partial<PhotoFormData> = {
               ...formDataFromExif,
-              title,
+              title: title || aiTitle,
               caption,
               tags: tags || aiTags,
               hidden,
@@ -429,6 +436,7 @@ export const syncPhotoAction = async (photoId: string, isBatch?: boolean) =>
         } = await generateAiImageQueries(
           imageResizedBase64,
           photo.syncStatus.missingAiTextFields,
+          undefined,
           isBatch,
         );
 
@@ -477,12 +485,13 @@ export const clearCacheAction = async () =>
 export const streamAiImageQueryAction = async (
   imageBase64: string,
   query: AiImageQuery,
+  existingTitle?: string,
 ) =>
   runAuthenticatedAdminServerAction(async () => {
     const existingTags = await getUniqueTags();
     return streamOpenAiImageQuery(
       imageBase64,
-      getAiImageQuery(query, existingTags),
+      getAiImageQuery(query, existingTags, existingTitle),
     );
   });
 

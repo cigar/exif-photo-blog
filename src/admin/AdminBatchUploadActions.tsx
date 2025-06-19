@@ -149,6 +149,7 @@ export default function AdminBatchUploadActions({
                 onChange={setTags}
                 onError={setTagErrorMessage}
                 readOnly={isAdding}
+                className="relative z-10"
               />
               <div className="flex gap-8">
                 <FieldsetFavs
@@ -217,7 +218,7 @@ export default function AdminBatchUploadActions({
                   }
                 }
               }}
-              hideTextOnMobile={false}
+              hideText="never"
             >
               {buttonText}
             </ProgressButton>
@@ -234,7 +235,7 @@ export default function AdminBatchUploadActions({
               }}
               className="w-full flex justify-center"
               shouldRedirectToAdminPhotos
-              hideTextOnMobile={false}
+              hideText="never"
               disabled={isAdding}
             >
               Delete All Uploads

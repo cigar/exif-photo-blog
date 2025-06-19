@@ -19,7 +19,7 @@ export default function LoaderButton({
   spinnerColor,
   spinnerClassName,
   styleAs = 'button',
-  hideTextOnMobile = true,
+  hideText = 'on-mobile',
   confirmText,
   shouldPreventDefault,
   primary,
@@ -39,7 +39,7 @@ export default function LoaderButton({
   spinnerColor?: SpinnerColor
   spinnerClassName?: string
   styleAs?: 'button' | 'link' | 'link-without-hover'
-  hideTextOnMobile?: boolean
+  hideText?: 'always' | 'on-mobile' | 'never'
   confirmText?: string
   shouldPreventDefault?: boolean
   primary?: boolean
@@ -69,7 +69,7 @@ export default function LoaderButton({
         ),
         styleAs === 'link' && 'hover:text-dim',
         styleAs === 'link-without-hover' && 'hover:text-main',
-        'inline-flex items-center gap-2 self-start whitespace-nowrap',
+        'inline-flex items-center gap-1.5 self-start whitespace-nowrap',
         primary && 'primary',
         hideFocusOutline && 'focus:outline-hidden',
         className,
@@ -88,7 +88,7 @@ export default function LoaderButton({
               size={14}
               color={spinnerColor}
               className={clsx(
-                'translate-y-[1px]',
+                'translate-y-[0.5px]',
                 spinnerClassName,
               )}
             />
@@ -96,7 +96,8 @@ export default function LoaderButton({
         </span>}
       {children && <span className={clsx(
         styleAs !== 'button' && isLoading && 'text-dim',
-        hideTextOnMobile && icon !== undefined && 'hidden sm:inline-block',
+        hideText === 'on-mobile' && icon !== undefined && 'max-sm:hidden',
+        hideText === 'always' && 'hidden',
       )}>
         {children}
       </span>}

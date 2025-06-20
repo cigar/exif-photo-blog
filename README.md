@@ -18,6 +18,7 @@ https://photos.sambecker.com
 - Automatic OG image generation
 - CMD-K menu with photo search
 - AI-generated text descriptions
+- RSS/JSON feeds
 - Support for Fujifilm recipes and film simulations
 
 <img src="/readme/og-image-share.png" alt="OG Image Preview" width=600 />
@@ -145,6 +146,7 @@ Application behavior can be changed by configuring the following environment var
 - `NEXT_PUBLIC_EXHAUSTIVE_SIDEBAR_CATEGORIES = 1` always shows expanded sidebar content
 - `NEXT_PUBLIC_HIDE_KEYBOARD_SHORTCUT_TOOLTIPS = 1` hides keyboard shortcut hints in areas like the main nav, and previous/next photo links
 - `NEXT_PUBLIC_HIDE_EXIF_DATA = 1` hides EXIF data in photo details and OG images (potentially useful for portfolios, which don't focus on photography)
+- `NEXT_PUBLIC_CATEGORY_IMAGE_HOVERS = 1` shows images when hovering over category links like cameras and lenses (⚠️ setting `NEXT_PUBLIC_STATICALLY_OPTIMIZE_PHOTO_CATEGORY_OG_IMAGES = 1` strongly recommended for responsive hover interactions)
 - `NEXT_PUBLIC_HIDE_ZOOM_CONTROLS = 1` hides fullscreen photo zoom controls
 - `NEXT_PUBLIC_HIDE_TAKEN_AT_TIME = 1` hides taken at time from photo meta
 - `NEXT_PUBLIC_HIDE_SOCIAL = 1` removes X (formerly Twitter) button from share modal
@@ -265,15 +267,15 @@ Partial internationalization (for non-admin, user-facing text) provided for a ha
 
 ### Supported Languages
 - `en-us`
-- `es-es` (coming soon)
 - `pt-br`
 - `pt-pt`
 - `id-id`
 - `zh-cn`
+- `bd-bn`
 
 To add support for a new language, open a PR following instructions in [/src/i18n/index.ts](https://github.com/sambecker/exif-photo-blog/blob/main/src/i18n/index.ts), using [en-us.ts](https://github.com/sambecker/exif-photo-blog/blob/main/src/i18n/locales/en-us.ts) as reference.
 
-Thank you ❤️ translators: [@sconetto](https://github.com/sconetto) (`pt-br`, `pt-pt`), [@brandnholl](https://github.com/brandnholl) (`id-id`), [@TongEc](https://github.com/TongEc) (`zh-cn`)
+Thank you ❤️ translators: [@sconetto](https://github.com/sconetto) (`pt-br`, `pt-pt`), [@brandnholl](https://github.com/brandnholl) (`id-id`), [@TongEc](https://github.com/TongEc) (`zh-cn`), [@xahidex](https://github.com/xahidex) (`bd-bn`)
 
 📖&nbsp;&nbsp;FAQ
 -

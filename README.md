@@ -486,3 +486,12 @@ Thank you ❤️ translators: [@sconetto](https://github.com/sconetto) (`pt-br`,
 
 #### Why am I seeing many merge conflicts when syncing my fork?
 > Previous versions of this template stored Next.js "App Router" files in `/src`, and app-level functionality in `/src/site`. If you've made customizations and are having difficulty merging updates, consider moving `/src/app` files to `/`, and renaming `src/site` to `/src/app`. Other structural changes include moving `tailwind.css` and `middleware.ts` to `/`. Additionally, it may be helpful to review [PR #195](https://github.com/sambecker/exif-photo-blog/pull/195) for an overview of the most significant changes.
+
+### Programmatic feed configuration
+
+You can control the default and maximum number of photos returned by the programmatic feeds (`/feed.json` and `/rss.xml`) using environment variables and a query parameter:
+
+- `FEED_PHOTO_REQUEST_LIMIT` (default: `40`) — default number of photos returned by programmatic feeds.
+- `FEED_PHOTO_MAX_LIMIT` (default: `200`) — maximum allowed number of photos a caller can request via `?limit=`.
+
+Both feeds accept a `limit` query parameter, e.g. `/feed.json?limit=80` or `/rss.xml?limit=80`. The value will be clamped to the range `[1, FEED_PHOTO_MAX_LIMIT]` to avoid excessive page sizes. The feeds also include CORS headers so they can be fetched from third-party sites (set `FEED_PHOTO_MAX_LIMIT` lower if you want to be more restrictive).

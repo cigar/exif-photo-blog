@@ -499,3 +499,14 @@ You can control the default and maximum number of photos returned by the program
 - `FEED_PHOTO_MAX_LIMIT` (default: `200`) — maximum allowed number of photos a caller can request via `?limit=`.
 
 Both feeds accept a `limit` query parameter, e.g. `/feed.json?limit=80` or `/rss.xml?limit=80`. The value will be clamped to the range `[1, FEED_PHOTO_MAX_LIMIT]` to avoid excessive page sizes. The feeds also include CORS headers so they can be fetched from third-party sites (set `FEED_PHOTO_MAX_LIMIT` lower if you want to be more restrictive).
+
+#### Cursor (keyset) pagination (recommended for infinite scroll)
+
+For robust infinite scroll, use cursor-based (keyset) pagination:
+
+- The feed responses include a `nextCursor` (in JSON meta for feed.json, and in header `X-Next-Cursor` for rss.xml) when more results exist.
+- Cursor format: base64(JSON({ createdAt: "<ISO string>", id: "<photo-id>" })). Example encoded cursor: `btoa(JSON.stringify({ createdAt: "2026-01-01T12:00:00.000Z", id: "abc-123" }))`.
+- First request: `/feed.json?limit=40` (no cursor).
+- Next request: `/feed.json?limit=40&cursor=<nextCursor>`.
+
+Offset-based pagination (`?offset=NN&limit=NN`) is still supported for backward compatibility, but keyset (cursor) pagination is recommended when you need stable next-page traversal without duplicates/omissions caused by concurrent inserts.

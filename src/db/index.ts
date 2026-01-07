@@ -33,6 +33,9 @@ export type PhotoQueryOptions = {
   updatedBefore?: Date
   excludeFromFeeds?: boolean
   hidden?: 'exclude' | 'include' | 'only'
+  // Keyset pagination support:
+  createdBefore?: Date
+  idBefore?: string
 } & Omit<PhotoSetCategory, 'camera' | 'lens' | 'album'> & {
   camera?: Partial<Camera>
   lens?: Partial<Lens>
@@ -68,6 +71,9 @@ export const getWheresFromOptions = (
     film,
     recipe,
     focal,
+    // keyset
+    createdBefore,
+    idBefore,
   } = options;
 
   const wheres = [] as string[];
@@ -158,6 +164,19 @@ export const getWheresFromOptions = (
     wheresValues.push(focal);
   }
 
+  // Keyset pagination: createdBefore + idBefore
+  if (createdBefore) {
+    if (idBefore) {
+      // Composite condition to ensure deterministic ordering for items with identical created_at
+      wheres.push(`(created_at < $${valuesIndex} OR (created_at = $${valuesIndex} AND p.id < $${valuesIndex + 1}))`);
+      wheresValues.push(createdBefore.toISOString(), idBefore);
+      valuesIndex += 2;
+    } else {
+      wheres.push(`created_at < $${valuesIndex++}`);
+      wheresValues.push(createdBefore.toISOString());
+    }
+  }
+
   return {
     wheres: wheres.length > 0
       ? `WHERE ${wheres.join(' AND ')}`
@@ -190,7 +209,7 @@ export const getOrderByFromOptions = (options: PhotoQueryOptions) => {
       return sortWithPriority
         ? 'ORDER BY priority_order ASC, created_at ASC'
         : 'ORDER BY created_at ASC';
-      // Add date sort to account for photos with same color sort
+    // Add date sort to account for photos with same color sort
     case 'color':
       return sortWithPriority
         ? 'ORDER BY priority_order ASC, color_sort DESC, taken_at DESC'
@@ -221,14 +240,14 @@ export const getLimitAndOffsetFromOptions = (
 
 export const convertArrayToPostgresString = (
   array?: string[],
-  type: 'braces' | 'brackets' | 'parentheses' = 'braces', 
+  type: 'braces' | 'brackets' | 'parentheses' = 'braces',
 ) => array
-  ? type === 'braces'
-    ? `{${array.join(',')}}`
-    : type === 'brackets'
-      ? `[${array.map(i => `'${i}'`).join(',')}]`
-      : `(${array.map(i => `'${i}'`).join(',')})`
-  : null;
+    ? type === 'braces'
+      ? `{${array.join(',')}}`
+      : type === 'brackets'
+        ? `[${array.map(i => `'${i}'`).join(',')}]`
+        : `(${array.map(i => `'${i}'`).join(',')})`
+    : null;
 
 export const generateManyToManyValues = (idsA: string[], idsB: string[]) => {
   const pairs: string[][] = [];
@@ -238,13 +257,6 @@ export const generateManyToManyValues = (idsA: string[], idsB: string[]) => {
       pairs.push([idA, idB]);
     }
   }
-  const valueString = 'VALUES ' + pairs.map((_, index) =>
-    `($${index * 2 + 1},$${index * 2 + 2})`).join(',');
 
-  const values = pairs.flat();
-  
-  return {
-    valueString,
-    values,
-  };
+  return pairs;
 };

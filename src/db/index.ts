@@ -260,21 +260,20 @@ export const convertArrayToPostgresString = (
     : null;
 
 export const generateManyToManyValues = (idsA: string[], idsB: string[]) => {
-  const pairs: string[][] = [];
+  const values: string[] = [];
+  const valueStrings: string[] = [];
 
-  for (const idA of idsA) {
-    for (const idB of idsB) {
-      pairs.push([idA, idB]);
-    }
-  }
+  let index = 1;
 
-  const valueString = 'VALUES ' + pairs.map((_, index) =>
-    `($${index * 2 + 1},$${index * 2 + 2})`).join(',');
-
-  const values = pairs.flat();
+  idsA.forEach((idA) => {
+    idsB.forEach((idB) => {
+      valueStrings.push(`($${index++},$${index++})`);
+      values.push(idA, idB);
+    });
+  });
 
   return {
-    valueString,
+    valueString: `VALUES ${valueStrings.join(',')}`,
     values,
   };
 };

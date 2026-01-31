@@ -1,4 +1,4 @@
-import { getPhotosCached } from '@/photo/cache';
+import { getPhotosCached, getPhotosMetaCached } from '@/photo/cache';
 import { SITE_FEEDS_ENABLED } from '@/app/config';
 import { formatFeedJson } from '@/feed/json';
 import { PROGRAMMATIC_QUERY_OPTIONS } from '@/feed';
@@ -40,6 +40,7 @@ export async function GET(req: Request) {
   const limitParam = url.searchParams.get('limit');
   const offsetParam = url.searchParams.get('offset');
   const cursorParam = url.searchParams.get('cursor');
+  const tagParam = url.searchParams.get('tag');
 
   const requestedLimit = limitParam ? parseInt(limitParam, 10) : undefined;
   const requestedOffset = offsetParam ? Math.max(0, parseInt(offsetParam, 10)) : undefined;
@@ -55,6 +56,7 @@ export async function GET(req: Request) {
   const baseOptions = {
     ...PROGRAMMATIC_QUERY_OPTIONS,
     limit,
+    ...(tagParam && { tag: tagParam }),
   } as any;
 
   // Priority 1: cursor (keyset)
@@ -67,25 +69,44 @@ export async function GET(req: Request) {
     baseOptions.offset = requestedOffset;
   }
 
-  const photos = await getPhotosCached(baseOptions).catch(() => []);
+  // Fetch photos and total count in parallel
+  const [photos, meta] = await Promise.all([
+    getPhotosCached(baseOptions).catch(() => []),
+    getPhotosMetaCached({ ...(tagParam && { tag: tagParam }) }).catch(() => ({ count: 0 })),
+  ]);
+
+  const total = meta.count;
   const responseBody = formatFeedJson(photos);
 
   // Build nextCursor only if we have at least `limit` items returned (indicating possible next page)
   let nextCursor: string | undefined;
-  if (photos.length === limit && photos.length > 0) {
+  const hasMore = photos.length === limit && photos.length > 0;
+
+  if (hasMore) {
     const last = photos[photos.length - 1];
     // createdAt here is a Date object in Photo; ensure ISO string
     const createdAtStr = (last.createdAt instanceof Date) ? last.createdAt.toISOString() : String(last.createdAt);
     nextCursor = encodeCursor(createdAtStr, last.id);
-    // Append to meta
-    (responseBody as any).meta = {
-      ...(responseBody as any).meta,
-      nextCursor,
-    };
   }
+
+  // Append metadata
+  (responseBody as any).meta = {
+    ...(responseBody as any).meta,
+    total,
+    hasMore,
+    ...(nextCursor && { nextCursor }),
+  };
+
+  // Generate ETag from photos data
+  const lastUpdated = photos.length > 0
+    ? Math.max(...photos.map(p => new Date(p.updatedAt).getTime()))
+    : Date.now();
+  const etag = `"feed-${total}-${lastUpdated}"`;
 
   const headers = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=300',
+    'ETag': etag,
     ...CORS_HEADERS,
   };
 

@@ -10,6 +10,7 @@ import {
 import { formatDateFromPostgresString } from '@/utility/date';
 import { Photo } from '@/photo';
 import { BASE_URL, META_DESCRIPTION, META_TITLE } from '@/app/config';
+import { convertOklchToCss } from '@/photo/color/client';
 
 interface FeedPhotoJson {
   id: string
@@ -30,7 +31,7 @@ const formatPhotoForFeedJson = (photo: Photo): FeedPhotoJson => ({
   url: absolutePathForPhoto({ photo }),
   aspectRatio: photo.aspectRatio,
   ...(photo.blurData && { blurData: photo.blurData }),
-  ...(photo.colorData?.primary && { dominantColor: photo.colorData.primary }),
+  ...(photo.colorData?.average && { dominantColor: convertOklchToCss(photo.colorData.average) }),
   ...(photo.make && { make: photo.make }),
   ...(photo.model && { model: photo.model }),
   ...(photo.tags.length > 0 && { tags: photo.tags }),

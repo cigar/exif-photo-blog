@@ -15,6 +15,9 @@ interface FeedPhotoJson {
   id: string
   title: string
   url: string
+  aspectRatio: number
+  blurData?: string
+  dominantColor?: string
   make?: string
   model?: string
   tags?: string[]
@@ -25,9 +28,12 @@ interface FeedPhotoJson {
 const formatPhotoForFeedJson = (photo: Photo): FeedPhotoJson => ({
   ...getCoreFeedFields(photo),
   url: absolutePathForPhoto({ photo }),
-  ...photo.make && { make: photo.make },
-  ...photo.model && { model: photo.model },
-  ...photo.tags.length > 0 && { tags: photo.tags },
+  aspectRatio: photo.aspectRatio,
+  ...(photo.blurData && { blurData: photo.blurData }),
+  ...(photo.colorData?.primary && { dominantColor: photo.colorData.primary }),
+  ...(photo.make && { make: photo.make }),
+  ...(photo.model && { model: photo.model }),
+  ...(photo.tags.length > 0 && { tags: photo.tags }),
   takenAtNaive: formatDateFromPostgresString(photo.takenAtNaive),
   src: {
     small: generateFeedMedia(photo, FEED_PHOTO_WIDTH_SMALL),
@@ -40,7 +46,7 @@ export const formatFeedJson = (photos: Photo[]) => ({
   meta: {
     title: META_TITLE,
     url: BASE_URL,
-    ...META_DESCRIPTION && { description: META_DESCRIPTION },
+    ...(META_DESCRIPTION && { description: META_DESCRIPTION }),
   },
   photos: photos.map(formatPhotoForFeedJson),
 });

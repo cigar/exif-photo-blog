@@ -23,9 +23,9 @@ export default async function ImagePhotoGrid({
   gap?: number
   imageStyle?: React.CSSProperties
 } & (
-  { width: NextImageSize, widthArbitrary?: undefined } |
-  { width?: undefined, widthArbitrary: number }
-))) {
+    { width: NextImageSize, widthArbitrary?: undefined } |
+    { width?: undefined, widthArbitrary: number }
+  ))) {
   let count = photos.length;
   if (photos.length >= 12) { count = 12; }
   else if (photos.length >= 6) { count = 6; }
@@ -48,7 +48,7 @@ export default async function ImagePhotoGrid({
     (width ?? widthArbitrary) / imagesPerRow -
     (imagesPerRow - 1) * gap / (imagesPerRow)
   );
-  const cellHeight= height / rows -
+  const cellHeight = height / rows -
     (rows - 1) * gap / rows;
 
   const doOptimizedFilesExist = await doAllPhotosHaveOptimizedFiles(photos);
@@ -71,6 +71,8 @@ export default async function ImagePhotoGrid({
           addBypassSecret: IS_PREVIEW,
           compatibilityMode: !doOptimizedFilesExist,
         }),
+        width,
+        height,
         style: {
           ...imageStyle,
           width: '100%',

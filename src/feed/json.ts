@@ -17,7 +17,6 @@ interface FeedPhotoJson {
   title: string
   url: string
   aspectRatio: number
-  blurData?: string
   dominantColor?: string
   make?: string
   model?: string
@@ -30,7 +29,6 @@ const formatPhotoForFeedJson = (photo: Photo): FeedPhotoJson => ({
   ...getCoreFeedFields(photo),
   url: absolutePathForPhoto({ photo }),
   aspectRatio: photo.aspectRatio,
-  ...(photo.blurData && { blurData: photo.blurData }),
   ...(photo.colorData?.average && { dominantColor: convertOklchToCss(photo.colorData.average) }),
   ...(photo.make && { make: photo.make }),
   ...(photo.model && { model: photo.model }),

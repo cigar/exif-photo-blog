@@ -4,7 +4,7 @@ import LoaderButton from '@/components/primitives/LoaderButton';
 import AppGrid from '@/components/AppGrid';
 import { clsx } from 'clsx/lite';
 import { IoCloseSharp } from 'react-icons/io5';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Tags } from '@/tag';
 import FieldsetTag from '@/tag/FieldsetTag';
 import { batchPhotoAction } from '@/photo/actions';
@@ -44,15 +44,17 @@ export default function AdminBatchEditPanelClient({
     selectAllCount,
     isPerformingSelectEdit,
     setIsPerformingSelectEdit,
+    albumTitles,
+    setAlbumTitles,
+    tags,
+    setTags,
+    tagErrorMessage,
+    setTagErrorMessage,
   } = useSelectPhotosState();
 
   const appText = useAppText();
 
-  const [albumTitles, setAlbumsTitles] = useState<string>();
   const isInAlbumMode = albumTitles !== undefined;
-
-  const [tags, setTags] = useState<string>();
-  const [tagErrorMessage, setTagErrorMessage] = useState('');
   const isInTagMode = tags !== undefined;
 
   const batchPhotoActionArguments = (
@@ -103,9 +105,9 @@ export default function AdminBatchEditPanelClient({
           className="translate-y-[0.5px]"
         />}
         onClick={() => {
-          setAlbumsTitles(undefined);
-          setTags(undefined);
-          setTagErrorMessage('');
+          setAlbumTitles?.(undefined);
+          setTags?.(undefined);
+          setTagErrorMessage?.('');
         }}
         disabled={isPerformingSelectEdit}
       />
@@ -120,22 +122,32 @@ export default function AdminBatchEditPanelClient({
         onClick={() => {
           setIsPerformingSelectEdit?.(true);
           if (isInTagMode) {
+            const tagsArray = convertStringToArray(tags, false);
+            const tagsFormatted = tagsArray
+              .map(tag => `"${tag}"`)
+              .join(', ');
             batchPhotoAction({
               ...batchPhotoActionArguments,
-              tags: convertStringToArray(tags, false),
+              tags: tagsArray,
             })
               .then(() => {
-                toastSuccess(`${photosText} tagged`);
+                toastSuccess(`${photosText} tagged ${tagsFormatted}`);
                 stopSelectingPhotos?.();
               })
               .finally(() => setIsPerformingSelectEdit?.(false));
           } else if (isInAlbumMode) {
+            const albumTitlesArray = convertStringToArray(albumTitles, false);
+            const albumTitlesFormatted = albumTitlesArray
+              .map(title => `"${title}"`)
+              .join(', ');
             batchPhotoAction({
               ...batchPhotoActionArguments,
-              albumTitles: albumTitles.split(','),
+              albumTitles: albumTitlesArray,
             })
               .then(() => {
-                toastSuccess(`${photosText} added`);
+                toastSuccess(
+                  `${photosText} added to ${albumTitlesFormatted}`,
+                );
                 stopSelectingPhotos?.();
               })
               .finally(() => setIsPerformingSelectEdit?.(false));
@@ -182,14 +194,14 @@ export default function AdminBatchEditPanelClient({
         }}
       />
       <LoaderButton
-        onClick={() => setAlbumsTitles('')}
+        onClick={() => setAlbumTitles?.('')}
         disabled={isFormDisabled}
         icon={<IconAlbum size={15} className="translate-y-[1.5px]" />}
       >
         Album
       </LoaderButton>
       <LoaderButton
-        onClick={() => setTags('')}
+        onClick={() => setTags?.('')}
         disabled={isFormDisabled}
         icon={<IconTag size={15} className="translate-y-[1.5px]" />}
       >
@@ -234,7 +246,7 @@ export default function AdminBatchEditPanelClient({
               ? <FieldsetAlbum
                 albumOptions={uniqueAlbums}
                 value={albumTitles}
-                onChange={setAlbumsTitles}
+                onChange={setAlbumTitles}
                 readOnly={isPerformingSelectEdit}
                 openOnLoad
                 hideLabel
@@ -244,7 +256,7 @@ export default function AdminBatchEditPanelClient({
                   tags={tags}
                   tagOptions={uniqueTags}
                   placeholder={`Tag ${photosText} ...`}
-                  onChange={setTags}
+                  onChange={tags => setTags?.(tags)}
                   onError={setTagErrorMessage}
                   readOnly={isPerformingSelectEdit}
                   openOnLoad

@@ -22,7 +22,6 @@ import {
   getPhotoOptionsCountForPath,
 } from '@/db';
 import {
-  FIELDS_TO_NOT_OVERWRITE_WITH_NULL_DATA_ON_SYNC,
   PhotoFormData,
   convertFormDataToPhotoDbInsert,
   convertPhotoToFormData,
@@ -41,7 +40,6 @@ import {
 } from '@/cache';
 import { revalidatePhoto, getPhotosCached } from './cache';
 import {
-  PATH_ADMIN_PHOTOS,
   PATH_ADMIN_RECIPES,
   PATH_ADMIN_TAGS,
   PATH_ROOT,
@@ -109,7 +107,6 @@ export const createPhotoAction = async (formData: FormData) =>
       await addAlbumTitlesToPhoto(albumTitles, photo.id, false);
       await propagateRecipeTitleIfNecessary(formData, photo);
       revalidateAllKeysAndPaths();
-      redirect(PATH_ADMIN_PHOTOS);
     }
   });
 
@@ -344,8 +341,6 @@ export const updatePhotoAction = async (formData: FormData) =>
       });
 
     revalidateAllKeysAndPaths();
-
-    redirect(PATH_ADMIN_PHOTOS);
   });
 
 export const toggleFavoritePhotoAction = async (
@@ -583,9 +578,11 @@ export const getExifDataAction = async (
 export const syncPhotoAction = async (
   photoId: string, {
     isBatch,
+    syncMode = 'auto',
     updateMode,
   }: {
     isBatch?: boolean,
+    syncMode?: 'auto' | 'only-missing' | 'overwrite',
     updateMode?: boolean,
   } = {},
 ) =>
@@ -602,7 +599,7 @@ export const syncPhotoAction = async (
         includeInitialPhotoFields: false,
         generateBlurData: BLUR_ENABLED,
         generateResizedImage: AI_CONTENT_GENERATION_ENABLED,
-        // If in update mode, only update color fields if necessary
+        // In update mode, only update color fields if necessary
         updateColorFields: !(
           updateMode &&
           photo.colorData !== undefined &&
@@ -643,10 +640,22 @@ export const syncPhotoAction = async (
 
         const formDataFromPhoto = convertPhotoToFormData(photo);
 
-        // Don't overwrite manually configured meta with null data
-        FIELDS_TO_NOT_OVERWRITE_WITH_NULL_DATA_ON_SYNC.forEach(field => {
-          if (!formDataFromExif[field] && formDataFromPhoto[field]) {
-            delete formDataFromExif[field];
+        Object.entries(formDataFromExif).forEach(([field, value]) => {
+          const existingValue =
+            formDataFromPhoto[field as keyof PhotoFormData];
+          switch (syncMode) {
+            case 'auto':
+              // Remove all fields already present in formDataFromPhoto
+              if (existingValue !== undefined) {
+                delete formDataFromExif[field as keyof PhotoFormData];
+              }
+              break;
+            case 'only-missing':
+              // Avoid overwriting fields with null data
+              if (existingValue !== undefined && !value) {
+                delete formDataFromExif[field as keyof PhotoFormData];
+              }
+              break;
           }
         });
 

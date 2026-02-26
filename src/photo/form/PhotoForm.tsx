@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react';
 import {
+  FIELDS_TO_NOT_TOAST,
   FIELDS_WITH_JSON,
   FORM_METADATA_ENTRIES_BY_SECTION,
   FORM_SECTIONS,
@@ -26,7 +27,11 @@ import { createPhotoAction, updatePhotoAction } from '../actions';
 import SubmitButtonWithStatus from '@/components/SubmitButtonWithStatus';
 import Link from 'next/link';
 import { clsx } from 'clsx/lite';
-import { PATH_ADMIN_PHOTOS, PATH_ADMIN_UPLOADS } from '@/app/path';
+import {
+  PARAM_REDIRECT,
+  PATH_ADMIN_PHOTOS,
+  PATH_ADMIN_UPLOADS,
+} from '@/app/path';
 import { toastSuccess, toastWarning } from '@/toast';
 import { getDimensionsFromSize } from '@/utility/size';
 import ImageWithFallback from '@/components/image/ImageWithFallback';
@@ -66,6 +71,7 @@ import { TbPhoto } from 'react-icons/tb';
 import { Albums } from '@/album';
 import FieldsetAlbum from '@/album/FieldsetAlbum';
 import Form from 'next/form';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const THUMBNAIL_SIZE = 300;
 
@@ -102,6 +108,10 @@ export default function PhotoForm({
   onFormDataChange?: (formData: Partial<PhotoFormData>) => void,
   onFormStatusChange?: (pending: boolean) => void
 }) {
+  const router = useRouter();
+
+  const redirectParam = useSearchParams().get(PARAM_REDIRECT);
+
   const [formData, setFormData] =
     useState<Partial<PhotoFormData>>(initialPhotoForm);
   const [formErrors, setFormErrors] =
@@ -175,8 +185,10 @@ export default function PhotoForm({
         setDetectedFilm(updatedExifData.film);
       }
 
-      if (changedKeys.length > 0) {
-        const fields = convertFormKeysToLabels(changedKeys);
+      const keysToToast = changedKeys.filter(key =>
+        !FIELDS_TO_NOT_TOAST.includes(key));
+      if (keysToToast.length > 0) {
+        const fields = convertFormKeysToLabels(keysToToast);
         toastSuccess(`Updated EXIF fields: ${fields.join(', ')}`, 8000);
       } else {
         toastWarning('No new EXIF data found');
@@ -481,6 +493,9 @@ export default function PhotoForm({
           ? createPhotoAction
           : updatePhotoAction
         )(data)
+          .then(() => {
+            router.push(redirectParam ?? PATH_ADMIN_PHOTOS);
+          })
           .catch(e => {
             if (e.message !== 'NEXT_REDIRECT') {
               setFormActionErrorMessage(e.message);

@@ -152,6 +152,10 @@ export const SIDEBAR_TEXT =
   process.env.NEXT_PUBLIC_PAGE_ABOUT ||
   process.env.NEXT_PUBLIC_SITE_ABOUT;
 
+export const ABOUT_DESCRIPTION_DEFAULT =
+  process.env.NEXT_PUBLIC_META_DESCRIPTION ||
+  process.env.NEXT_PUBLIC_SIDEBAR_TEXT;
+
 // STORAGE
 
 // STORAGE: DATABASE

@@ -28,7 +28,7 @@ import AdminEmptyState from '@/admin/AdminEmptyState';
 export default function AboutPageClient({
   title,
   subhead,
-  description,
+  descriptionHtml,
   photosCount = 0,
   photosOldest,
   photoAvatar,
@@ -43,7 +43,7 @@ export default function AboutPageClient({
 }: {
   title?: string
   subhead?: string
-  description?: ReactNode
+  descriptionHtml?: ReactNode
   photosCount?: number
   photosOldest?: string
   photoAvatar?: Photo
@@ -178,26 +178,24 @@ export default function AboutPageClient({
               </div>
               {isUserSignedIn && <AdminAboutMenu />}
             </div>
-            {description
-              ? <div className="text-medium [&>*>a]:underline">
-                {description}
-              </div>
+            {descriptionHtml
+              ? descriptionHtml
               : isUserSignedIn &&
-                <Link
-                  href={PATH_ADMIN_ABOUT_EDIT}
-                  className={clsx(
-                    'flex items-center justify-center gap-2.5',
-                    'border border-dashed border-medium rounded-lg',
-                  )}
-                >
-                  <AdminEmptyState
-                    icon={<LuCirclePlus size={22} />}
-                    includeContainer={false}
-                    className="gap-3! p-6!"
+                  <Link
+                    href={PATH_ADMIN_ABOUT_EDIT}
+                    className={clsx(
+                      'flex items-center justify-center gap-2.5',
+                      'border border-dashed border-medium rounded-lg',
+                    )}
                   >
-                    Add optional description
-                  </AdminEmptyState>
-                </Link>}
+                    <AdminEmptyState
+                      icon={<LuCirclePlus size={22} />}
+                      includeContainer={false}
+                      className="gap-3! p-6!"
+                    >
+                      Add optional description
+                    </AdminEmptyState>
+                  </Link>}
             <AnimateItems
               className={clsx(
                 'grid gap-x-2 gap-y-6 grid-cols-2 lg:grid-cols-4',

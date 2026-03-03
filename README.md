@@ -403,6 +403,7 @@ Partial internationalization (for non-admin, user-facing text) provided for a ha
 - `bd-bn`
 - `en-gb`
 - `en-us`
+- `es-es`
 - `hi-in`
 - `id-id`
 - `pt-br`
@@ -413,7 +414,7 @@ Partial internationalization (for non-admin, user-facing text) provided for a ha
 
 To add support for a new language, open a PR following instructions in [/src/i18n/index.ts](https://github.com/sambecker/exif-photo-blog/blob/main/src/i18n/index.ts), using [en-us.ts](https://github.com/sambecker/exif-photo-blog/blob/main/src/i18n/locales/en-us.ts) as reference.
 
-Thank you ❤️ translators: [@sconetto](https://github.com/sconetto) (`pt-br`, `pt-pt`), [@brandnholl](https://github.com/brandnholl) (`id-id`), [@TongEc](https://github.com/TongEc) (`zh-cn`), [@xahidex](https://github.com/xahidex) (`bd-bn`, `hi-in`), [@mehmetabak](https://github.com/mehmetabak) (`tr-tr`), [@simondeeley](https://github.com/simondeeley) (`en-gb`), [@jasonquache](https://github.com/jasonquache) (`vi-vn`)
+Thank you ❤️ translators: [@sconetto](https://github.com/sconetto) (`pt-br`, `pt-pt`, `es-es`), [@brandnholl](https://github.com/brandnholl) (`id-id`), [@TongEc](https://github.com/TongEc) (`zh-cn`), [@xahidex](https://github.com/xahidex) (`bd-bn`, `hi-in`), [@mehmetabak](https://github.com/mehmetabak) (`tr-tr`), [@simondeeley](https://github.com/simondeeley) (`en-gb`), [@jasonquache](https://github.com/jasonquache) (`vi-vn`)
 
 📖&nbsp;&nbsp;FAQ
 -

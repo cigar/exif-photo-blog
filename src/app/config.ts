@@ -165,13 +165,20 @@ export const POSTGRES_SSL_ENABLED =
   process.env.DISABLE_POSTGRES_SSL === '1' ? false : true;
 
 // STORAGE: REDIS
+export const REDIS_URL = (
+  process.env.KV_URL ||
+  process.env.KV_REST_API_URL ||
+  process.env.EXIF_KV_REST_API_URL ||
+  process.env.UPSTASH_REDIS_REST_URL
+);
+export const REDIS_TOKEN = (
+  process.env.KV_TOKEN ||
+  process.env.KV_REST_API_TOKEN ||
+  process.env.EXIF_KV_REST_API_TOKEN ||
+  process.env.UPSTASH_REDIS_REST_TOKEN
+);
 export const HAS_REDIS_STORAGE =
-  Boolean(
-    process.env.KV_URL ||
-    process.env.KV_REST_API_URL ||
-    process.env.EXIF_KV_REST_API_URL ||
-    process.env.UPSTASH_REDIS_REST_URL,
-  );
+  Boolean(REDIS_URL && REDIS_TOKEN);
 
 // STORAGE: VERCEL BLOB
 export const HAS_VERCEL_BLOB_STORAGE =

@@ -24,6 +24,7 @@ export type RevalidatePhoto = (
 ) => Promise<any>;
 
 export default function InfinitePhotoScroll({
+  initialPhotos,
   cacheKey,
   initialOffset,
   itemsPerPage,
@@ -34,6 +35,7 @@ export default function InfinitePhotoScroll({
   year,
   camera,
   lens,
+  album,
   tag,
   recipe,
   film,
@@ -44,6 +46,9 @@ export default function InfinitePhotoScroll({
   includeHiddenPhotos,
   children,
 }: {
+  // Required for masonry grid:
+  // initialPhotos necessary to build layout without random gaps
+  initialPhotos?: Photo[]
   initialOffset: number
   itemsPerPage: number
   sortBy?: SortBy
@@ -87,6 +92,7 @@ export default function InfinitePhotoScroll({
       year,
       camera,
       lens,
+      album,
       tag,
       recipe,
       film,
@@ -104,6 +110,7 @@ export default function InfinitePhotoScroll({
     year,
     camera,
     lens,
+    album,
     tag,
     recipe,
     film,
@@ -168,18 +175,31 @@ export default function InfinitePhotoScroll({
       </button>
     </div>;
 
+  const flattenedPhotos = initialPhotos
+    ? initialPhotos.concat(data?.flat() ?? [])
+    : undefined;
+
   return (
     <>
-      {data?.map((photos, index) => (
-        children({
-          key: `${cacheKey}-${index}`,
-          photos, 
-          onLastPhotoVisible: index === data.length - 1
-            ? advance
-            : undefined,
+      {flattenedPhotos
+        ? children({
+          key: cacheKey,
+          photos: flattenedPhotos,
+          onLastPhotoVisible: !isFinished ? advance : undefined,
           revalidatePhoto,
         })
-      ))}
+        : (
+          data?.map((photos, index) => (
+            children({
+              key: `${cacheKey}-${index}`,
+              photos,
+              onLastPhotoVisible: index === data.length - 1
+                ? advance
+                : undefined,
+              revalidatePhoto,
+            })
+          ))
+        )}
       {!isFinished && <div className={moreButtonClassName}>
         {wrapMoreButtonInGrid
           ? <AppGrid contentMain={renderMoreButton} />

@@ -354,6 +354,8 @@ export const SHOW_REPO_LINK =
 
 export const GRID_HOMEPAGE_ENABLED =
   process.env.NEXT_PUBLIC_GRID_HOMEPAGE === '1';
+export const MASONRY_GRID_ENABLED =
+  process.env.NEXT_PUBLIC_MASONRY_GRID === '1';
 export const GRID_ASPECT_RATIO =
   process.env.NEXT_PUBLIC_GRID_ASPECT_RATIO
     ? parseFloat(process.env.NEXT_PUBLIC_GRID_ASPECT_RATIO)
@@ -514,6 +516,7 @@ export const APP_CONFIGURATION = {
   showRepoLink: SHOW_REPO_LINK,
   // Grid
   isGridHomepageEnabled: GRID_HOMEPAGE_ENABLED,
+  isMasonryGridEnabled: MASONRY_GRID_ENABLED,
   gridAspectRatio: GRID_ASPECT_RATIO,
   hasGridAspectRatio: Boolean(process.env.NEXT_PUBLIC_GRID_ASPECT_RATIO),
   hasHighGridDensity: HIGH_DENSITY_GRID,

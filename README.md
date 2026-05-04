@@ -172,6 +172,7 @@ Create Upstash Redis store from storage tab of Vercel dashboard and link to your
 
 ### Grid
 - `NEXT_PUBLIC_GRID_HOMEPAGE = 1` shows grid layout on homepage
+- `NEXT_PUBLIC_MASONRY_GRID = 1` shows photo grid homepage in masonry layout (keeping photo aspect ratios), also known as 'Pinterest style' or 'grid-lanes'
 - `NEXT_PUBLIC_GRID_ASPECT_RATIO = 1.5` sets aspect ratio for grid tiles (defaults to `1`—setting to `0` removes the constraint)
 - `NEXT_PUBLIC_SHOW_LARGE_THUMBNAILS = 1` ensures large thumbnails on photo grid views (if not configured, density is based on aspect ratio)
 

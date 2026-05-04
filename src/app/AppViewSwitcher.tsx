@@ -14,6 +14,7 @@ import {
   SHOW_KEYBOARD_SHORTCUT_TOOLTIPS,
   NAV_SORT_CONTROL,
   SHOW_ABOUT_PAGE,
+  MASONRY_GRID_ENABLED,
 } from './config';
 import AdminAppMenu from '@/admin/AdminAppMenu';
 import Spinner from '@/components/Spinner';
@@ -29,6 +30,7 @@ import { motion } from 'framer-motion';
 import SortMenu from '@/photo/sort/SortMenu';
 import { SWR_KEYS } from '@/swr';
 import IconAbout from '@/components/icons/IconAbout';
+import IconGridMasonry from '@/components/icons/IconGridMasonry';
 
 export type SwitcherSelection = 'full' | 'grid' | 'about' | 'admin';
 
@@ -126,7 +128,7 @@ export default function AppViewSwitcher({
 
   const renderItemGrid =
     <SwitcherItem
-      icon={<IconGrid />}
+      icon={MASONRY_GRID_ENABLED ? <IconGridMasonry /> : <IconGrid />}
       href={pathGrid}
       hrefRef={refHrefGrid}
       active={currentSelection === 'grid'}

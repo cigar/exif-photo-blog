@@ -115,6 +115,7 @@ export default function AdminAppConfigurationClient({
   showRepoLink,
   // Grid
   isGridHomepageEnabled,
+  isMasonryGridEnabled,
   gridAspectRatio,
   hasGridAspectRatio,
   hasHighGridDensity,
@@ -850,6 +851,14 @@ export default function AdminAppConfigurationClient({
             Set environment variable to {'"1"'} to show grid layout
             on homepage
             {renderEnvVars(['NEXT_PUBLIC_GRID_HOMEPAGE'])}
+          </ChecklistRow>
+          <ChecklistRow
+            title="Masonry grid"
+            status={isMasonryGridEnabled}
+            optional
+          >
+            Set environment variable to {'"1"'} to show masonry grid layout
+            {renderEnvVars(['NEXT_PUBLIC_MASONRY_GRID'])}
           </ChecklistRow>
           <ChecklistRow
             title={`Grid aspect ratio: ${gridAspectRatio}`}

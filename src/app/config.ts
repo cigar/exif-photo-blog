@@ -12,6 +12,7 @@ import { getNavSortControlFromString, getSortByFromString } from '@/photo/sort';
 import { parseChromaCutoff, parseStartingHue } from '@/photo/color/sort';
 import { parseSocialKeysFromString } from '@/social';
 import { dependencies } from '../../package.json';
+import { normalizeRedisUrl } from '@/platforms/redis';
 
 // HARD-CODED GLOBAL CONFIGURATION
 
@@ -165,11 +166,11 @@ export const POSTGRES_SSL_ENABLED =
   process.env.DISABLE_POSTGRES_SSL === '1' ? false : true;
 
 // STORAGE: REDIS
-export const REDIS_URL = (
+export const REDIS_URL = normalizeRedisUrl(
   process.env.KV_URL ||
   process.env.KV_REST_API_URL ||
   process.env.EXIF_KV_REST_API_URL ||
-  process.env.UPSTASH_REDIS_REST_URL
+  process.env.UPSTASH_REDIS_REST_URL,
 );
 export const REDIS_TOKEN = (
   process.env.KV_TOKEN ||

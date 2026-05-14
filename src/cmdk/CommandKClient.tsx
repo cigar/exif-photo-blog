@@ -35,6 +35,10 @@ import {
   pathForTag,
   pathForYear,
   PREFIX_RECENTS,
+  isPathFull,
+  isPathGrid,
+  isPathAbout,
+  isPathRoot,
 } from '../app/path';
 import Modal from '../components/Modal';
 import { clsx } from 'clsx/lite';
@@ -574,6 +578,9 @@ export default function CommandKClient({
       ? appText.nav.full
       : `${appText.nav.full} (${appText.nav.home})`,
     path: PATH_FULL_INFERRED,
+    annotation: renderCheck(GRID_HOMEPAGE_ENABLED
+      ? isPathFull(pathname)
+      : isPathRoot(pathname)),
   };
 
   const pageGrid: CommandKItem = {
@@ -581,6 +588,9 @@ export default function CommandKClient({
       ? `${appText.nav.grid} (${appText.nav.home})`
       : appText.nav.grid,
     path: PATH_GRID_INFERRED,
+    annotation: renderCheck(GRID_HOMEPAGE_ENABLED
+      ? isPathRoot(pathname)
+      : isPathGrid(pathname)),
   };
 
   const pageItems: CommandKItem[] = GRID_HOMEPAGE_ENABLED
@@ -591,6 +601,7 @@ export default function CommandKClient({
     pageItems.push({
       label: appText.nav.about,
       path: PATH_ABOUT,
+      annotation: renderCheck(isPathAbout(pathname)),
     });
   }
 

@@ -222,7 +222,6 @@ export default function FieldsetWithStatus({
                 accessory={tagOptionsAccessory}
                 onChange={onChange}
                 onInputTextChange={tagOptionsOnInputTextChange}
-                showMenuOnDelete={tagOptionsLimit === 1}
                 className={clsx(Boolean(error) && 'error')}
                 readOnly={readOnly}
                 placeholder={placeholder}

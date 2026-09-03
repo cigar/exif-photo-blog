@@ -45,9 +45,11 @@ import useSupportsHover from '@/utility/useSupportsHover';
 export default function AppStateProvider({
   children,
   areAdminDebugToolsEnabled,
+  isAdminAiModelDebugEnabled,
 }: {
   children: ReactNode
   areAdminDebugToolsEnabled?: boolean
+  isAdminAiModelDebugEnabled?: boolean
 }) {
   const router = useRouter();
 
@@ -83,6 +85,8 @@ export default function AppStateProvider({
   // MODAL
   const [isCommandKOpen, setIsCommandKOpen] =
     useState(false);
+  const [nextCommandKQuery, setNextCommandKQuery] =
+    useState<string>();
   const [shareModalProps, setShareModalProps] =
     useState<ShareModalProps>();
   const [recipeModalProps, setRecipeModalProps] =
@@ -100,6 +104,8 @@ export default function AppStateProvider({
   // UPLOAD
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [uploadState, _setUploadState] = useState(INITIAL_UPLOAD_STATE);
+  // VIEW
+  const [isPhotoSetFull, setIsPhotoSetFull] = useState(false);
   // DEBUG
   const [isGridHighDensity, setIsGridHighDensity] =
     useState(HIGH_DENSITY_GRID);
@@ -129,17 +135,31 @@ export default function AppStateProvider({
     return () => clearTimeout(timeout);
   }, []);
 
-  const { mutate } = useSWRConfig();
-  const invalidateSwr = useCallback((key?: SWRKey, revalidate?: boolean) => {
-    if (key) {
-      // Mutate specific key
-      mutate((k: string) => k?.startsWith(key), undefined, { revalidate });
+  const { unload, mutate } = useSWRConfig();
+
+  const invalidateSwr = useCallback((
+    args?: {
+      key?: SWRKey
+      revalidate?: boolean
+    },
+  ) => {
+    if (!args) {
+      // Key filters passed to `mutate` cannot match the internal `$inf$` keys
+      // holding useSWRInfinite's page data and page count, so infinite photo
+      // scroll can only be reset by unloading the entire cache
+      unload();
     } else {
-      // Mutate all keys that can be purged
-      mutate(canKeyBePurged, undefined, { revalidate: false });
-      mutate(canKeyBePurgedAndRevalidated, undefined, { revalidate: true });
+      const { key, revalidate } = args;
+      if (key) {
+        // Mutate specific key
+        mutate((k: string) => k?.startsWith(key), undefined, { revalidate });
+      } else {
+        // Mutate all keys that can be purged
+        mutate(canKeyBePurged, undefined, { revalidate: false });
+        mutate(canKeyBePurgedAndRevalidated, undefined, { revalidate: true });
+      }
     }
-  }, [mutate]);
+  }, [mutate, unload]);
 
   const { data: categoriesWithCounts } = useSWR(
     SWR_KEYS.GET_COUNTS_FOR_CATEGORIES,
@@ -157,8 +177,10 @@ export default function AppStateProvider({
       setUserEmail(undefined);
       setUserEmailEager(undefined);
       clearAuthEmailCookie();
-    } else {
-      setUserEmail(auth?.user?.email ?? undefined);
+    } else if (auth) {
+      // Retain email while auth is undefined, i.e., in flight,
+      // so cache invalidation doesn't flash a signed out state
+      setUserEmail(auth.user?.email ?? undefined);
     }
   }, [auth, authError]);
 
@@ -240,6 +262,8 @@ export default function AppStateProvider({
         // MODAL
         isCommandKOpen,
         setIsCommandKOpen,
+        nextCommandKQuery,
+        setNextCommandKQuery,
         shareModalProps,
         setShareModalProps,
         recipeModalProps,
@@ -266,8 +290,12 @@ export default function AppStateProvider({
         uploadState,
         setUploadState,
         resetUploadState,
+        // VIEW
+        isPhotoSetFull,
+        setIsPhotoSetFull,
         // DEBUG
         areAdminDebugToolsEnabled,
+        isAdminAiModelDebugEnabled,
         isGridHighDensity,
         setIsGridHighDensity,
         areZoomControlsShown,

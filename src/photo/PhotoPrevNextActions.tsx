@@ -112,7 +112,7 @@ export default function PhotoPrevNextActions({
     : undefined;
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.metaKey) {
+    if (e.metaKey || e.ctrlKey) {
       switch (e.key.toUpperCase()) {
         case KEY_COMMANDS.delete[1]:
           if (isUserSignedIn) {
@@ -202,10 +202,13 @@ export default function PhotoPrevNextActions({
         'items-center sm:items-start',
         '*:select-none',
       )}>
-        <Tooltip {...SHOW_KEYBOARD_SHORTCUT_TOOLTIPS && {
-          content: appText.nav.prev,
-          keyCommand: KEY_COMMANDS.prev[0],
-        }}>
+        <Tooltip
+          triggerIsFocusable
+          {...SHOW_KEYBOARD_SHORTCUT_TOOLTIPS && {
+            content: appText.nav.prev,
+            keyCommand: KEY_COMMANDS.prev[0],
+          }}
+        >
           <PhotoLink
             {...categories}
             ref={refPrevious}
@@ -224,10 +227,13 @@ export default function PhotoPrevNextActions({
         <span className="text-extra-extra-dim">
           /
         </span>
-        <Tooltip {...SHOW_KEYBOARD_SHORTCUT_TOOLTIPS && {
-          content: appText.nav.next,
-          keyCommand: KEY_COMMANDS.next[0],
-        }}>
+        <Tooltip
+          triggerIsFocusable
+          {...SHOW_KEYBOARD_SHORTCUT_TOOLTIPS && {
+            content: appText.nav.next,
+            keyCommand: KEY_COMMANDS.next[0],
+          }}
+        >
           <PhotoLink
             {...categories}
             ref={refNext}

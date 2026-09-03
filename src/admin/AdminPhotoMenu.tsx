@@ -4,9 +4,8 @@ import { ComponentProps, useCallback, useMemo, useRef } from 'react';
 import {
   getPathComponents,
   PARAM_REDIRECT,
-  PATH_ROOT,
   pathForAdminPhotoEdit,
-  pathForTag,
+  pathForPhoto,
 } from '@/app/path';
 import {
   deletePhotoAction,
@@ -21,9 +20,10 @@ import {
   downloadFileNameForPhoto,
   titleForPhoto,
 } from '@/photo';
-import { isPathFavs, isPhotoFav, TAG_PRIVATE } from '@/tag';
-import { usePathname } from 'next/navigation';
+import { isPathFavs, isPhotoFav } from '@/tag';
+import { usePathname, useRouter } from 'next/navigation';
 import MoreMenu, { MoreMenuSection } from '@/components/more/MoreMenu';
+import { renderMenuItemCheck } from '@/components/more/MoreMenuItem';
 import { useAppState } from '@/app/AppState';
 import { RevalidatePhoto } from '@/photo/InfinitePhotoScroll';
 import { MdOutlineFileDownload } from 'react-icons/md';
@@ -34,7 +34,6 @@ import IconEdit from '@/components/icons/IconEdit';
 import { photoNeedsToBeUpdated } from '@/photo/update';
 import { KEY_COMMANDS } from '@/photo/key-commands';
 import { useAppText } from '@/i18n/state/client';
-import IconCheck from '@/components/icons/IconCheck';
 import IconTrash from '@/components/icons/IconTrash';
 import IconUpload from '@/components/icons/IconUpload';
 import { uploadPhotoFromClient } from '@/photo/storage';
@@ -43,8 +42,7 @@ import { PRESERVE_ORIGINAL_UPLOADS } from '@/app/config';
 import IconWarning from '@/components/icons/IconWarning';
 import {
   getVisibilityFromPhoto,
-  VISIBILITY_LABEL,
-  VISIBILITY_OPTIONS,
+  getVisibilityOptions,
   VisibilityValue,
 } from '@/photo/visibility';
 
@@ -69,6 +67,8 @@ export default function AdminPhotoMenu({
   const inputRef = useRef<HTMLInputElement>(null);
   const onUploadFinishRef = useRef<() => void>(null);
 
+  const router = useRouter();
+
   const path = usePathname();
   const pathComponents = getPathComponents(path);
   const isOnPhotoDetail = pathComponents.photoId === photo.id;
@@ -76,23 +76,20 @@ export default function AdminPhotoMenu({
   const shouldRedirectFav = isPathFavs(path) && isFav;
   const shouldRedirectDelete = isOnPhotoDetail;
   const visibility = getVisibilityFromPhoto(photo);
-  // Only leave the photo detail page when privacy itself changes
+  // Only leave the photo detail page when privacy itself changes, following
+  // the photo to its new url: private photos are only reachable beneath the
+  // private tag, public photos only outside it
   const redirectPathForVisibility = useCallback((value: VisibilityValue) => {
     const willBePrivate = value === 'private';
     return isOnPhotoDetail && willBePrivate !== Boolean(photo.hidden)
-      ? willBePrivate
-        ? PATH_ROOT
-        : pathForTag(TAG_PRIVATE)
+      ? pathForPhoto({ photo: { ...photo, hidden: willBePrivate } })
       : undefined;
-  }, [isOnPhotoDetail, photo.hidden]);
+  }, [isOnPhotoDetail, photo]);
 
   const sectionMain = useMemo(() => {
     const items: MoreMenuSection['items'] = [{
       label: appText.admin.edit,
-      icon: <IconEdit
-        size={14}
-        className="translate-x-[1px] translate-y-[-0.5px]"
-      />,
+      icon: <IconEdit />,
       href: pathForAdminPhotoEdit(photo.id) +
         `?${PARAM_REDIRECT}=${encodeURIComponent(path)}`,
       ...showKeyCommands && { keyCommand: KEY_COMMANDS.edit },
@@ -126,26 +123,29 @@ export default function AdminPhotoMenu({
       hrefDownloadName: downloadFileNameForPhoto(photo),
       ...showKeyCommands && { keyCommand: KEY_COMMANDS.download },
     });
+    const visibilityOptions = getVisibilityOptions(appText);
     items.push({
-      label: VISIBILITY_LABEL,
-      icon: VISIBILITY_OPTIONS
+      label: appText.admin.setVisibility,
+      icon: <span className="block translate-x-[-1px]">{visibilityOptions
         .find(({ value }) => value === visibility)
-        ?.accessoryStart,
-      items: VISIBILITY_OPTIONS.map(({ value, label, accessoryStart }) => ({
+        ?.accessoryStart}</span>,
+      items: visibilityOptions.map(({ value, label, accessoryStart }) => ({
         label,
-        icon: accessoryStart,
-        ...value === visibility && {
-          accessoryEnd: <IconCheck
-            size={13}
-            className="translate-y-[-1px]"
-          />,
-        },
+        // Selected visibility is marked with a check, unselected show its icon
+        icon: value === visibility
+          ? renderMenuItemCheck(true)
+          : accessoryStart,
         action: () => setPhotoVisibilityAction(
           photo.id,
           value,
           redirectPathForVisibility(value),
         )
-          .then(() => revalidatePhoto?.(photo.id)),
+          .then(() => {
+            // Photos leaving a feed shift every subsequent page
+            revalidatePhoto?.(photo.id, true);
+            // Update photos rendered on the server, which SWR doesn't own
+            router.refresh();
+          }),
       })),
     });
     items.push({
@@ -212,6 +212,7 @@ export default function AdminPhotoMenu({
     visibility,
     redirectPathForVisibility,
     revalidatePhoto,
+    router,
   ]);
 
   const sectionDelete: MoreMenuSection = useMemo(() => ({

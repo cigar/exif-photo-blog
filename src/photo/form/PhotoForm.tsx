@@ -47,6 +47,7 @@ import ErrorNote from '@/components/ErrorNote';
 import { convertRecipesForForm, Recipes } from '@/recipe';
 import deepEqual from 'fast-deep-equal/es6/react';
 import ApplyRecipeTitleGloballyCheckbox from './ApplyRecipesGloballyCheckbox';
+import FieldsetRecipeData from './FieldsetRecipeData';
 import { convertFilmsForForm, Films } from '@/film';
 import { isMakeFujifilm } from '@/platforms/fujifilm';
 import PhotoFilmIcon from '@/film/PhotoFilmIcon';
@@ -370,6 +371,19 @@ export default function PhotoForm({
     }));
   }, [setFormData]);
 
+  // Recipe data copied in from a chosen title can be replaced by subsequent
+  // titles, and is never used to search for photos needing that title
+  const [copiedRecipeData, setCopiedRecipeData] = useState<string>();
+
+  const didCopyRecipeData =
+    Boolean(formData.recipeData) &&
+    formData.recipeData === copiedRecipeData;
+
+  const onRecipeDataFound = useCallback((recipeData: string) => {
+    setCopiedRecipeData(recipeData);
+    setFormData(data => ({ ...data, recipeData }));
+  }, [setFormData]);
+
   const formContent = useMemo(() =>
     FORM_METADATA_ENTRIES_BY_SECTION(
       convertTagsForForm(uniqueTags, appText),
@@ -400,7 +414,7 @@ export default function PhotoForm({
   const thumbnail = (includeRef?: boolean, className?: string) =>
     <ImageWithFallback
       ref={includeRef ? ref : undefined}
-      alt="Upload"
+      alt={formData.title || 'Photo thumbnail'}
       src={url}
       className={clsx(
         'border rounded-md overflow-hidden',
@@ -617,7 +631,16 @@ export default function PhotoForm({
                             changedFormKeys.includes('recipeTitle')}
                           recipeData={formData.recipeData}
                           film={formData.film}
+                          didCopyRecipeData={didCopyRecipeData}
                           onMatchResults={onMatchResults}
+                        />;
+                      case 'recipeData':
+                        return <FieldsetRecipeData
+                          key={key}
+                          {...fieldProps}
+                          recipeTitle={formData.recipeTitle}
+                          didCopyRecipeData={didCopyRecipeData}
+                          onRecipeDataFound={onRecipeDataFound}
                         />;
                       case 'colorData':
                         return <FieldsetWithStatus
@@ -633,7 +656,7 @@ export default function PhotoForm({
                         return <FieldsetWithStatus
                           key={key}
                           {...fieldProps}
-                          className="relative z-2"
+                          className="relative z-3"
                         />;
                       case 'albums':
                         return <FieldsetAlbum
@@ -658,6 +681,7 @@ export default function PhotoForm({
                             initialPhotoForm,
                             formData,
                           )}
+                          className="relative z-2"
                         />;
                       case 'takenAt':
                         return <FieldsetWithStatus

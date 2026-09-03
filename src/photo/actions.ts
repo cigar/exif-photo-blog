@@ -6,6 +6,7 @@ import {
   updatePhoto,
   updatePhotoTitleCaption,
   renamePhotoTagGlobally,
+  setPhotoVisibilityForIds,
   getPhoto,
   getPhotos,
   addTagsToPhotos,
@@ -13,6 +14,7 @@ import {
   deletePhotoRecipeGlobally,
   renamePhotoRecipeGlobally,
   getPhotosNeedingRecipeTitleCount,
+  getRecipeDataForTitle,
   updateColorDataForPhoto,
   getColorDataForPhotos,
   getPhotoIds,
@@ -86,6 +88,10 @@ import {
 import { addPhotoAlbumIds } from '@/album/query';
 import { getStorageUrlsForPhoto } from './storage';
 import type { VisibilityValue } from './visibility';
+import {
+  COMMAND_K_PHOTO_LIMIT,
+  getPhotosQueryData,
+} from '@/query/data';
 
 // Private actions
 
@@ -444,6 +450,11 @@ export const getPhotosNeedingRecipeTitleCountAction = async (
     ),
   );
 
+export const getRecipeDataForTitleAction = async (recipeTitle: string) =>
+  runAuthenticatedAdminServerAction(async () =>
+    await getRecipeDataForTitle(recipeTitle),
+  );
+
 export const storeColorDataForPhotoAction = async (photoId: string) =>
   runAuthenticatedAdminServerAction(async () => {
     const photo = await getPhoto(photoId, true);
@@ -729,12 +740,14 @@ export const batchPhotoAction = async ({
   photoOptions,
   tags = [],
   albumTitles = [],
+  visibility,
   action,
 }: {
   photoIds?: string[]
   photoOptions?: PhotoQueryOptions
   tags?: string[]
   albumTitles?: string[]
+  visibility?: VisibilityValue
   action?: 'favorite' | 'delete'
 }) => runAuthenticatedAdminServerAction(async () => {
   const photoIds = _photoIds.length > 0
@@ -749,6 +762,13 @@ export const batchPhotoAction = async ({
   if (albumTitles.length > 0) {
     const albumIds = await createAlbumsAndGetIds(albumTitles);
     await addPhotoAlbumIds(photoIds, albumIds);
+  }
+  if (visibility !== undefined) {
+    await setPhotoVisibilityForIds(
+      photoIds,
+      visibility === 'private',
+      visibility === 'exclude',
+    );
   }
   switch (action) {
     case 'favorite':
@@ -818,8 +838,9 @@ export const getPhotosCachedAction = async (
 // Public actions
 
 export const searchPhotosPublicAction = async (query: string) =>
-  getPhotos({ query, limit: 10 })
+  getPhotosQueryData({ query, limit: COMMAND_K_PHOTO_LIMIT })
+    .then(([photos, { count }]) => ({ photos, count }))
     .catch(e => {
       console.error('Could not query photos', e);
-      return [] as Photo[];
+      return { photos: [] as Photo[], count: 0 };
     });

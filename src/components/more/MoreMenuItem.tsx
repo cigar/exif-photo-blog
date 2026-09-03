@@ -11,6 +11,19 @@ import LoaderButton from '../primitives/LoaderButton';
 import { downloadFileFromBrowser } from '@/utility/url';
 import KeyCommand from '../primitives/KeyCommand';
 import LoaderLink from '../LoaderLink';
+import IconCheck from '../icons/IconCheck';
+
+// Indicate the active option in a menu of mutually-exclusive choices
+export const renderMenuItemCheck = (isChecked: boolean) => isChecked
+  ? <IconCheck size={13} />
+  : <span />;
+
+export const renderMenuItemLabel = (label: string, isSelected: boolean) => ({
+  label,
+  labelComplex: <span className={clsx(!isSelected && 'text-dim')}>
+    {label}
+  </span>,
+});
 
 export default function MoreMenuItem({
   label,
@@ -77,7 +90,7 @@ export default function MoreMenuItem({
       disabled={isLoading}
       className={clsx(
         'flex items-center h-8.5 gap-4',
-        'px-2 py-2 rounded-sm',
+        'px-2 py-2 rounded-lg',
         'select-none hover:outline-hidden',
         getColorClasses(),
         'whitespace-nowrap',

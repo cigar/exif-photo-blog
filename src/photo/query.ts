@@ -237,6 +237,24 @@ export const renamePhotoTagGlobally = (tag: string, updatedTag: string) =>
     WHERE ${tag}=ANY(tags)
   `, 'renamePhotoTagGlobally');
 
+export const setPhotoVisibilityForIds = (
+  photoIds: string[],
+  hidden: boolean,
+  excludeFromFeeds: boolean,
+) =>
+  safelyQuery(() => query(`
+    UPDATE photos SET
+      hidden = $1,
+      exclude_from_feeds = $2,
+      updated_at = $3
+    WHERE id = ANY($4)
+  `, [
+    hidden,
+    excludeFromFeeds,
+    (new Date()).toISOString(),
+    convertArrayToPostgresString(photoIds),
+  ]), 'setPhotoVisibilityForIds');
+
 export const addTagsToPhotos = (tags: string[], photoIds: string[]) =>
   safelyQuery(() => query(`
     UPDATE photos 
@@ -385,6 +403,21 @@ export const getRecipeTitleForData = async (
     .then(({ rows }) => rows[0]?.recipe_title as string | undefined)
   , 'getRecipeTitleForData');
 
+export const getRecipeDataForTitle = async (title: string) =>
+  safelyQuery(() => sql`
+    SELECT recipe_data FROM photos
+    WHERE hidden IS NOT TRUE
+    AND recipe_title=${title}
+    AND recipe_data IS NOT NULL
+    AND recipe_data::text <> 'null'
+    ORDER BY taken_at DESC
+    LIMIT 1
+  `
+    .then(({ rows }) => rows[0]?.recipe_data
+      ? JSON.stringify(rows[0].recipe_data)
+      : undefined)
+  , 'getRecipeDataForTitle');
+
 export const getPhotosNeedingRecipeTitleCount = async (
   data: string,
   film: string,
@@ -513,7 +546,7 @@ export const getPhotos = async (options: PhotoQueryOptions = {}) =>
 export const getPhotoIds = async (options: PhotoQueryOptions = {}) =>
   safelyQuery(
     async () => _getPhotos(options, ['id'], { shouldParse: false })
-      .then(({ photos }) => photos.map(photo => photo.id)),
+      .then(({ photos }) => photos.map(photo => photo.id as string)),
     'getPhotoIds',
     // Seemingly necessary to pass `options` for expected cache behavior
     options,

@@ -11,32 +11,64 @@ import clsx from 'clsx/lite';
 import { useState } from 'react';
 import { Photo } from '@/photo';
 import FieldsetPhotoChooser from '@/photo/form/FieldsetPhotoChooser';
+import PhotoFolder from '@/photo/PhotoFolder';
 
 export default function AdminComponentPageClient({
   photo,
   photos,
   photosCount,
   photosFavs,
+  photoFolders,
 }: {
   photo: Photo
   photos: Photo[]
   photosCount: number
   photosFavs: Photo[]
+  photoFolders: {
+    photos: Photo[]
+    caption: string
+  }[]
 }) {
   const [valuePhoto, setValuePhoto] = useState(photo?.id ?? '');
 
   const [value, setValue] = useState('visible');
 
+  const [tint, setTint] = useState(false);
+
   return (
     <AppGrid
       contentMain={<div className="flex flex-col gap-4">
+        <FieldsetWithStatus
+          label="Color tint"
+          type="checkbox"
+          value={tint ? 'true' : 'false'}
+          onChange={value => setTint(value === 'true')}
+        />
+        <div className={clsx(
+          'grid gap-3',
+          'grid-cols-2 xs:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
+        )}>
+          {photoFolders.map((folder, index) =>
+            <div
+              key={`${folder.caption}-${index}`}
+              className="w-full h-full flex items-center justify-center"
+            >
+              <PhotoFolder
+                photos={folder.photos}
+                caption={folder.caption}
+                tint={tint}
+              />
+            </div>)}
+        </div>
         <div className={clsx(
           'flex gap-1',
-          '*:inline-flex *:bg-medium *:rounded-[3px]',
+          // '*:inline-flex *:bg-medium *:rounded-[3px]',
         )}>
           <StatusIcon type="checked" />
           <StatusIcon type="missing" />
           <StatusIcon type="warning" />
+          <StatusIcon type="optional" />
+          <StatusIcon type="optional" loading />
           <StatusIcon type="optional" />
         </div>
         <div className="z-14">

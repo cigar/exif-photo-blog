@@ -136,16 +136,21 @@ To auto-generate text descriptions of photos, configure a provider. Vercel AI Ga
 4. Add [rate limiting](#rate-limiting) (_recommended_)
 5. Configure auto-generated fields (optional, see above for instructions)
 
-### Location services
+### Location
 
-To add location meta to entities like albums:
+To add location meta to entities like photos and albums:
 
-1. Setup Google Places API
+1. Setup Google Places/Geocoding API
    - [Create Google Cloud project](https://console.cloud.google.com/projectcreate) if necessary
+   - Enable "Places API (new)" (for finding places of interest)
+   - Enable "Geocoding API" (for reverse lookup based on lat/long coordinates)
    - Select [Create credentials](https://console.cloud.google.com/apis/credentials) and choose "API key"
-   - Choose "Restrict key" and select "Places API (new)"
-2. Store API key in `GOOGLE_PLACES_API_KEY`
+   - Choose "Restrict key" and select "Places API (new)" + "Geocoding API"
+2. Store API key in `GOOGLE_PLACES_GEOCODING_API_KEY`
 3. Add [rate limiting](#rate-limiting) (_recommended_)
+
+- `NEXT_PUBLIC_GEO_PRIVACY = 1` disables collection/display of location-based data (⚠️ re-compresses uploaded images in order to remove GPS information)
+- `DISABLE_AUTO_GENERATE_LOCATIONS = 1` to disables auto-generation of location data
 
 ### Rate limiting
 
@@ -210,7 +215,6 @@ Create Upstash Redis store from storage tab of Vercel dashboard and link to your
 - `NEXT_PUBLIC_MATTE_PHOTOS = 1` constrains the size of each photo, and displays a surrounding border, potentially useful for photos with tall aspect ratios (colors can be customized via `NEXT_PUBLIC_MATTE_COLOR` + `NEXT_PUBLIC_MATTE_COLOR_DARK`)
 
 ### Settings
-- `NEXT_PUBLIC_GEO_PRIVACY = 1` disables collection/display of location-based data (⚠️ re-compresses uploaded images in order to remove GPS information)
 - `NEXT_PUBLIC_ALLOW_PUBLIC_DOWNLOADS = 1` enables public photo downloads for all visitors (⚠️ may result in increased bandwidth usage)
 - `NEXT_PUBLIC_SOCIAL_NETWORKS`
   - Comma-separated list of share modal options
@@ -227,13 +231,13 @@ Create Upstash Redis store from storage tab of Vercel dashboard and link to your
 
 ### Scripts & Analytics
 - Web Analytics
-  1. Open project on Vercel
-  2. Click "Analytics" tab
-  3. Follow "Enable Web Analytics" instructions (`@vercel/analytics` already included)
+1. Open project on Vercel
+2. Click "Analytics" tab
+3. Follow "Enable Web Analytics" instructions (`@vercel/analytics` already included)
 - Speed Insights
-  1. Open project on Vercel
-  2. Click "Speed Insights" tab
-  3. Follow "Enable Speed Insights" instructions (`@vercel/speed-insights` already included)
+1. Open project on Vercel
+2. Click "Speed Insights" tab
+3. Follow "Enable Speed Insights" instructions (`@vercel/speed-insights` already included)
 - `PAGE_SCRIPT_URLS`
   - comma-separated list of URLs to be added to the bottom of the body tag via "next/script"
   - urls must begin with 'https'
@@ -336,7 +340,7 @@ Only one storage adapter—Vercel Blob, Cloudflare R2, AWS S3, or MinIO—can be
 
 MinIO is a self-hosted S3-compatible object storage server.
 
-### 1. Server/bucket setup
+#### 1. Server/bucket setup
 
 First, install and deploy the MinIO server, then create a bucket with public read access.
 
@@ -378,7 +382,7 @@ First, install and deploy the MinIO server, then create a bucket with public rea
     - `NEXT_PUBLIC_MINIO_PORT`: (optional)
     - `NEXT_PUBLIC_MINIO_DISABLE_SSL`: Set to `1` to disable SSL (defaults to HTTPS)
 
-### 2. Create user with restricted permissions
+#### 2. Create user with restricted permissions
 
 Create a dedicated user and a policy that grants permission to manage objects within your `BUCKET_NAME`.
 

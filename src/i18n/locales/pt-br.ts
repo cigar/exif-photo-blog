@@ -50,7 +50,7 @@ export const TEXT: I18N = {
     full: 'Completo',
     grid: 'Grade',
     viewOptions: 'Opções de visualização',
-    about: 'Sobre',
+    library: 'Biblioteca',
     admin: 'Menu de administrador',
     search: 'Pesquisar',
     prev: 'Anterior',
@@ -58,7 +58,7 @@ export const TEXT: I18N = {
     next: 'Próximo',
     nextShort: 'Próx',
   },
-  about: {
+  library: {
     titleDefault: 'Sobre este site',
     updated: 'Atualizado há {{distance}}',
     photoCount: 'Quantidade de fotos',
@@ -70,9 +70,6 @@ export const TEXT: I18N = {
     recentAlbum: 'Álbum recente',
     popularTag: 'Tag popular',
     popularPlace: 'Lugar popular',
-  },
-  footer: {
-    madeWith: 'Feito com',
   },
   sort: {
     sort: 'Ordenar',
@@ -157,6 +154,8 @@ export const TEXT: I18N = {
     download: 'Baixar',
     sync: 'Sincronizar',
     syncAutomatic: 'Automático',
+    syncUpdateColor: 'Atualizar cor',
+    syncUpdateColorSuccess: 'Cor atualizada:',
     syncOverwrite: 'Sobrescrever',
     // eslint-disable-next-line max-len
     syncOverwriteConfirm: 'Tem certeza de que deseja sobrescrever todos os campos da foto? Dados personalizados podem ser perdidos.',
@@ -213,8 +212,10 @@ export const TEXT: I18N = {
     tryAgain: 'Tentar Novamente',
     finishing: 'Finalizando ...',
     uploading: 'Enviando',
+    cancel: 'Cancelar',
     copyPhrase: '{{label}} copiado',
     paginate: '{{index}} de {{count}}',
     paginateAction: '{{action}} {{index}} de {{count}}',
+    madeWith: 'Feito com',
   },
 };

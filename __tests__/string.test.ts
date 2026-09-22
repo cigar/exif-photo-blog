@@ -1,4 +1,8 @@
-import { parameterize, depluralize } from '@/utility/string';
+import {
+  depluralize,
+  parameterize,
+  startsWithHangingPunctuation,
+} from '@/utility/string';
 
 describe('String', () => {
   it('parameterizes', () => {
@@ -16,5 +20,14 @@ describe('String', () => {
     expect(depluralize('tags')).toBe('tag');
     expect(depluralize('recipes')).toBe('recipe');
     expect(depluralize('films')).toBe('film');
+  });
+  it('detects hanging punctuation', () => {
+    expect(startsWithHangingPunctuation('“Quoted album”')).toBe(true);
+    expect(startsWithHangingPunctuation('"Quoted album"')).toBe(true);
+    expect(startsWithHangingPunctuation('‘Quoted album’')).toBe(true);
+    expect(startsWithHangingPunctuation('—Em dash lead')).toBe(true);
+    expect(startsWithHangingPunctuation('(Parenthetical)')).toBe(true);
+    expect(startsWithHangingPunctuation('Plain description')).toBe(false);
+    expect(startsWithHangingPunctuation('A “quote” later')).toBe(false);
   });
 });

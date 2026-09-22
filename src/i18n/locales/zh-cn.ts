@@ -50,7 +50,7 @@ export const TEXT: I18N = {
     full: '完整',
     grid: '网格',
     viewOptions: '视图选项',
-    about: '关于',
+    library: '图库',
     admin: '管理',
     search: '搜索',
     prev: '上一页',
@@ -58,7 +58,7 @@ export const TEXT: I18N = {
     next: '下一页',
     nextShort: '下一页',
   },
-  about: {
+  library: {
     titleDefault: '关于本网站',
     updated: '{{distance}} 前更新',
     photoCount: '照片数量',
@@ -70,9 +70,6 @@ export const TEXT: I18N = {
     recentAlbum: '最近相册',
     popularTag: '热门标签',
     popularPlace: '热门地点',
-  },
-  footer: {
-    madeWith: '基于',
   },
   sort: {
     sort: '排序',
@@ -157,6 +154,8 @@ export const TEXT: I18N = {
     download: '下载',
     sync: '同步',
     syncAutomatic: '自动',
+    syncUpdateColor: '更新颜色',
+    syncUpdateColorSuccess: '颜色已更新：',
     syncOverwrite: '覆盖',
     syncOverwriteConfirm: '确定要覆盖所有照片字段吗？自定义数据可能会丢失。',
     reupload: '重新上传',
@@ -207,8 +206,10 @@ export const TEXT: I18N = {
     tryAgain: '重试',
     finishing: '完成中...',
     uploading: '上传中',
+    cancel: '取消',
     copyPhrase: '{{label}} 已复制',
     paginate: '第 {{index}} 页，共 {{count}} 页',
     paginateAction: '{{action}} 第 {{index}} 页，共 {{count}} 页',
+    madeWith: '基于',
   },
 };

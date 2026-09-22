@@ -4,7 +4,7 @@ import { runAuthenticatedAdminServerAction } from '@/auth/server';
 import { deleteAlbum, updateAlbum } from './query';
 import { revalidateAllKeysAndPaths } from '@/cache';
 import { redirect } from 'next/navigation';
-import { PATH_ADMIN_ALBUMS, PATH_ROOT, pathForAlbum } from '@/app/path';
+import { PATH_ROOT, pathForAlbum } from '@/app/path';
 import { convertFormDataToAlbum } from './form';
 import { Album } from '.';
 
@@ -13,7 +13,6 @@ export const updateAlbumAction = async (formData: FormData) =>
     const album = convertFormDataToAlbum(formData);
     await updateAlbum(album);
     revalidateAllKeysAndPaths();
-    redirect(PATH_ADMIN_ALBUMS);
   });
 
 export const deleteAlbumFormAction = async (formData: FormData) =>

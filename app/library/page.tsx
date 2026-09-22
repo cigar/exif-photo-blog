@@ -1,47 +1,45 @@
-import AboutPageClient from '@/about/AboutPageClient';
-import { getAboutDataCached } from '@/about/data';
-import { ABOUT_DESCRIPTION_DEFAULT, SHOW_ABOUT_PAGE } from '@/app/config';
-import { PATH_ROOT } from '@/app/path';
+import { getLibraryMeta } from '@/library';
+import LibraryPageClient from '@/library/LibraryPageClient';
+import { getLibraryDataCached, getLibraryFolderRows } from '@/library/data';
+import { LIBRARY_DESCRIPTION_DEFAULT } from '@/app/config';
 import { getDataForCategoriesCached } from '@/category/cache';
 import {
   getLastModifiedForCategories,
   NULL_CATEGORY_DATA,
 } from '@/category/data';
+import { getAppText } from '@/i18n/state/server';
 import { getPhotosMetaCached } from '@/photo/cache';
 import PhotosEmptyState from '@/photo/PhotosEmptyState';
 import { getAllPhotoIdsWithUpdatedAt } from '@/photo/query';
 import { TAG_FAVS } from '@/tag';
 import { safelyParseFormattedHtml } from '@/utility/html';
 import { max } from 'date-fns';
-import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-static';
 
-export default async function AboutPage() {
-  if (!SHOW_ABOUT_PAGE) { redirect(PATH_ROOT); }
+export default async function LibraryPage() {  
+  const appText = await getAppText();
 
   const [
     {
-      about,
+      library,
       photoAvatar,
-      photoHero,
     },
     photosMeta,
     photos,
     categories,
   ] = await Promise.all([
-    getAboutDataCached()
+    getLibraryDataCached()
       .catch(() => ({
-        about: undefined,
+        library: undefined,
         photoAvatar: undefined,
-        photoHero: undefined,
       })),
     getPhotosMetaCached().catch(() => {}),
     getAllPhotoIdsWithUpdatedAt().catch(() => []),
     getDataForCategoriesCached().catch(() => (NULL_CATEGORY_DATA)),
   ]);
 
-  const description = about?.description || ABOUT_DESCRIPTION_DEFAULT;
+  const description = library?.description || LIBRARY_DESCRIPTION_DEFAULT;
 
   const descriptionHtml = description
     ? <div
@@ -61,33 +59,36 @@ export default async function AboutPage() {
     films,
   } = categories;
 
-  const place = albums
-    .slice()
-    .sort((a, b) => b.count - a.count)[0]?.album.location;
-
   const lastModifiedSite = max([
     getLastModifiedForCategories(categories, photos),
-    about?.updatedAt,
+    library?.updatedAt,
   ].filter(date => date instanceof Date));
+
+  const { title, subhead } = getLibraryMeta(
+    appText,
+    library?.title,
+    library?.subhead,
+  );
+
+  const folderRows = await getLibraryFolderRows(categories, appText);
 
   return (
     (photosMeta?.count ?? 0) > 0
-      ? <AboutPageClient
-        title={about?.title}
-        subhead={about?.subhead}
+      ? <LibraryPageClient
+        title={title}
+        subhead={subhead}
         descriptionHtml={descriptionHtml}
         photosCount={photosMeta?.count}
         photosOldest={photosMeta?.dateRange?.start}
         photoAvatar={photoAvatar}
-        photoHero={photoHero}
         camera={cameras[0]?.camera}
         lens={lenses[0]?.lens}
         recipe={recipes[0]?.recipe}
         film={films[0]?.film}
         tag={tags.filter(({ tag }) => tag !== TAG_FAVS)[0]?.tag}
-        place={place}
         album={albums[0]?.album}
         lastUpdated={lastModifiedSite}
+        folderRows={folderRows}
       />
       : <PhotosEmptyState />
   );

@@ -50,7 +50,7 @@ export const TEXT: I18N = {
     full: 'पूर्ण',
     grid: 'ग्रिड',
     viewOptions: 'दृश्य विकल्प',
-    about: 'के बारे में',
+    library: 'पुस्तकालय',
     admin: 'एडमिन',
     search: 'खोज',
     prev: 'पिछला',
@@ -58,7 +58,7 @@ export const TEXT: I18N = {
     next: 'अगला',
     nextShort: 'अगला',
   },
-  about: {
+  library: {
     titleDefault: 'इस साइट के बारे में',
     updated: '{{distance}} पहले अपडेट किया गया',
     photoCount: 'फोटो की संख्या',
@@ -70,9 +70,6 @@ export const TEXT: I18N = {
     recentAlbum: 'हाल का एल्बम',
     popularTag: 'लोकप्रिय टैग',
     popularPlace: 'लोकप्रिय स्थान',
-  },
-  footer: {
-    madeWith: 'निर्मित',
   },
   sort: {
     sort: 'क्रमबद्ध करें',
@@ -157,6 +154,8 @@ export const TEXT: I18N = {
     download: 'डाउनलोड करें',
     sync: 'सिंक करें',
     syncAutomatic: 'स्वचालित',
+    syncUpdateColor: 'रंग अपडेट करें',
+    syncUpdateColorSuccess: 'रंग अपडेट किया गया:',
     syncOverwrite: 'अधिलेखित करें',
     // eslint-disable-next-line max-len
     syncOverwriteConfirm: 'क्या आप सुनिश्चित हैं कि आप सभी फोटो फ़ील्ड को अधिलेखित करना चाहते हैं? अनुकूलित डेटा खो सकता है।',
@@ -215,8 +214,10 @@ export const TEXT: I18N = {
     tryAgain: 'फिर से कोशिश करें',
     finishing: 'समाप्त कर रहे हैं...',
     uploading: 'अपलोड हो रहा है',
+    cancel: 'रद्द करें',
     copyPhrase: '{{label}} कॉपी किया गया',
     paginate: '{{index}} / {{count}}',
     paginateAction: '{{action}} - {{index}} / {{count}}',
+    madeWith: 'निर्मित',
   },
 };

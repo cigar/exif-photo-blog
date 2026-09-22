@@ -50,7 +50,7 @@ export const TEXT: I18N = {
     full: 'Toàn bộ',
     grid: 'Lưới',
     viewOptions: 'Tùy chọn xem',
-    about: 'Giới thiệu',
+    library: 'Thư viện',
     admin: 'Quản trị',
     search: 'Tìm kiếm',
     prev: 'Trước',
@@ -58,7 +58,7 @@ export const TEXT: I18N = {
     next: 'Tiếp',
     nextShort: 'Tiếp',
   },
-  about: {
+  library: {
     titleDefault: 'Giới thiệu trang web',
     updated: 'Cập nhật {{distance}} trước',
     photoCount: 'Số lượng ảnh',
@@ -70,9 +70,6 @@ export const TEXT: I18N = {
     recentAlbum: 'Album gần đây',
     popularTag: 'Thẻ phổ biến',
     popularPlace: 'Địa điểm phổ biến',
-  },
-  footer: {
-    madeWith: 'Được tạo bằng',
   },
   sort: {
     sort: 'Sắp xếp',
@@ -157,6 +154,8 @@ export const TEXT: I18N = {
     download: 'Tải xuống',
     sync: 'Đồng bộ',
     syncAutomatic: 'Tự động',
+    syncUpdateColor: 'Cập nhật màu',
+    syncUpdateColorSuccess: 'Đã cập nhật màu:',
     syncOverwrite: 'Ghi đè',
     // eslint-disable-next-line max-len
     syncOverwriteConfirm: 'Bạn có chắc chắn muốn ghi đè tất cả các trường ảnh? Dữ liệu tùy chỉnh có thể bị mất.',
@@ -213,8 +212,10 @@ export const TEXT: I18N = {
     tryAgain: 'Thử lại',
     finishing: 'Đang hoàn thành...',
     uploading: 'Đang tải lên',
+    cancel: 'Hủy',
     copyPhrase: '{{label}} đã sao chép',
     paginate: '{{index}} của {{count}}',
     paginateAction: '{{action}} {{index}} của {{count}}',
+    madeWith: 'Được tạo bằng',
   },
 };

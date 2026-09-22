@@ -49,7 +49,7 @@ export const TEXT = {
     full: 'Full',
     grid: 'Grid',
     viewOptions: 'View Options',
-    about: 'About',
+    library: 'Library',
     admin: 'Admin',
     search: 'Search',
     prev: 'Previous',
@@ -57,7 +57,7 @@ export const TEXT = {
     next: 'Next',
     nextShort: 'Next',
   },
-  about: {
+  library: {
     titleDefault: 'About this site',
     updated: 'Updated {{distance}} ago',
     photoCount: 'Photo Count',
@@ -69,9 +69,6 @@ export const TEXT = {
     popularTag: 'Popular Tag',
     popularPlace: 'Popular Place',
     recentAlbum: 'Recent Album',
-  },
-  footer: {
-    madeWith: 'Made with',
   },
   sort: {
     sort: 'Sort',
@@ -156,6 +153,8 @@ export const TEXT = {
     download: 'Download',
     sync: 'Sync',
     syncAutomatic: 'Automatic',
+    syncUpdateColor: 'Update color',
+    syncUpdateColorSuccess: 'Color updated:',
     syncOverwrite: 'Overwrite',
     // eslint-disable-next-line max-len
     syncOverwriteConfirm: 'Are you sure you want to overwrite all photo fields? Customized data may be lost.',
@@ -212,8 +211,10 @@ export const TEXT = {
     tryAgain: 'Try Again',
     finishing: 'Finishing ...',
     uploading: 'Uploading',
+    cancel: 'Cancel',
     copyPhrase: '{{label}} copied',
     paginate: '{{index}} of {{count}}',
     paginateAction: '{{action}} {{index}} of {{count}}',
+    madeWith: 'Made with',
   },
 };

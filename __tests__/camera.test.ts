@@ -1,4 +1,5 @@
 import { Camera, formatCameraText } from '@/camera';
+import { getCameraBrand } from '@/camera/brand';
 import { MAKE_SONY } from '@/platforms/sony';
 
 const APPLE     : Camera = { make: 'Apple', model: 'iPhone 11 Pro' };
@@ -73,6 +74,26 @@ describe('Camera', () => {
     expect(formatCameraText(FUJIFILM, 'short')).toBe('X-T5');
     expect(formatCameraText(RICOH, 'short')).toBe('GR III');
     expect(formatCameraText(NIKON, 'short')).toBe('D7000');
+  });
+  it('recognizes camera brands from make', () => {
+    expect(getCameraBrand('FUJIFILM')).toBe('fujifilm');
+    expect(getCameraBrand('Fujifilm')).toBe('fujifilm');
+    expect(getCameraBrand('NIKON CORPORATION')).toBe('nikon');
+    expect(getCameraBrand('Nikon Corporation')).toBe('nikon');
+    expect(getCameraBrand('Canon')).toBe('canon');
+    expect(getCameraBrand('Canon Inc.')).toBe('canon');
+    expect(getCameraBrand('LEICA CAMERA AG')).toBe('leica');
+    expect(getCameraBrand('Leica Camera AG')).toBe('leica');
+    expect(getCameraBrand('HASSELBLAD')).toBe('hasselblad');
+    expect(getCameraBrand('Hasselblad')).toBe('hasselblad');
+    expect(getCameraBrand('Panasonic')).toBe('panasonic');
+    expect(getCameraBrand('LUMIX')).toBe('panasonic');
+    expect(getCameraBrand('SONY')).toBe('sony');
+    expect(getCameraBrand('Sony')).toBe('sony');
+    expect(getCameraBrand('RICOH IMAGING COMPANY, LTD.'))
+      .toBeUndefined();
+    expect(getCameraBrand('Apple')).toBeUndefined();
+    expect(getCameraBrand(undefined)).toBeUndefined();
   });
   it('formats Sony cameras', () => {
     Object.entries(SONY_MODELS).forEach(([model, expected]) => {

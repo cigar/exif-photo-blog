@@ -21,9 +21,15 @@ import {
   getChangedFormFields,
   getFormErrors,
   isFormValid,
+  formDataWithUpdatedColorData,
+  formDataWithUpdatedKeyColor,
 } from '.';
 import FieldsetWithStatus from '@/components/FieldsetWithStatus';
-import { createPhotoAction, updatePhotoAction } from '../actions';
+import {
+  createPhotoAction,
+  getAiColorAction,
+  updatePhotoAction,
+} from '../actions';
 import SubmitButtonWithStatus from '@/components/SubmitButtonWithStatus';
 import Link from 'next/link';
 import { clsx } from 'clsx/lite';
@@ -38,11 +44,15 @@ import ImageWithFallback from '@/components/image/ImageWithFallback';
 import { Tags, convertTagsForForm } from '@/tag';
 import { AiContent } from '../ai/useAiImageQueries';
 import AiButton from '../ai/AiButton';
+import { HiSparkles } from 'react-icons/hi';
+import LoaderButton from '@/components/primitives/LoaderButton';
 import Spinner from '@/components/Spinner';
 import usePreventNavigation from '@/utility/usePreventNavigation';
 import { useAppState } from '@/app/AppState';
 import UpdateBlurDataButton from '../UpdateBlurDataButton';
 import { BLUR_ENABLED, IS_PREVIEW } from '@/app/config';
+import PlaceInput from '@/place/PlaceInput';
+import { convertPlaceToAutocomplete, Place } from '@/place';
 import ErrorNote from '@/components/ErrorNote';
 import { convertRecipesForForm, Recipes } from '@/recipe';
 import deepEqual from 'fast-deep-equal/es6/react';
@@ -57,7 +67,13 @@ import IconAddUpload from '@/components/icons/IconAddUpload';
 import { didVisibilityChange } from '../visibility';
 import FieldsetVisibility from '../visibility/FieldsetVisibility';
 import PhotoColors from '../color/PhotoColors';
-import { generateColorDataFromString } from '../color/client';
+import ColorDot from '../color/ColorDot';
+import {
+  convertJsonStringToOklch,
+  convertOklchToJsonString,
+  generateColorDataFromString,
+  getKeyColorFromColorData,
+} from '../color/client';
 import { capitalize } from '@/utility/string';
 import AnchorSections from '@/components/AnchorSections';
 import useIsVisible from '@/utility/useIsVisible';
@@ -90,6 +106,7 @@ export default function PhotoForm({
   uniqueFilms,
   aiContent,
   shouldStripGpsData,
+  hasLocationServices,
   onTitleChange,
   onFormDataChange,
   onFormStatusChange,
@@ -106,6 +123,7 @@ export default function PhotoForm({
   uniqueFilms: Films
   aiContent?: AiContent
   shouldStripGpsData?: boolean
+  hasLocationServices?: boolean
   onTitleChange?: (updatedTitle: string) => void
   onFormDataChange?: (formData: Partial<PhotoFormData>) => void,
   onFormStatusChange?: (pending: boolean) => void
@@ -126,6 +144,8 @@ export default function PhotoForm({
   const [albumTitles, setAlbumTitles] = useState(photoAlbumTitles
     .sort((a, b) => a.localeCompare(b))
     .join(','));
+  const [isLoadingPlace, setIsLoadingPlace] = useState(false);
+  const [isLoadingKeyColor, setIsLoadingKeyColor] = useState(false);
 
   const areAlbumTitlesModified = albumTitles !== photoAlbumTitles
     .sort((a, b) => a.localeCompare(b))
@@ -150,7 +170,8 @@ export default function PhotoForm({
   const canFormBeSubmitted =
     (type === 'create' || formHasChanged) &&
     isFormValid(formData) &&
-    !aiContent?.isLoading;
+    !aiContent?.isLoading &&
+    !isLoadingKeyColor;
 
   // Update form when EXIF data
   // is refreshed by parent
@@ -177,9 +198,17 @@ export default function PhotoForm({
             }
           });
 
+        const colorData = generateColorDataFromString(
+          updatedExifData?.colorData,
+        );
+        const keyColor = convertOklchToJsonString(
+          getKeyColorFromColorData(colorData),
+        );
+
         return {
           ...currentForm,
           ...updatedExifData,
+          ...updatedExifData?.colorData !== undefined && { keyColor },
         };
       });
 
@@ -199,6 +228,26 @@ export default function PhotoForm({
   }, [updatedExifData]);
 
   const url = formData.url ?? '';
+
+  const regenerateKeyColor = useCallback(async () => {
+    if (!url) { return; }
+    setIsLoadingKeyColor(true);
+    try {
+      const ai = await getAiColorAction(url);
+      if (ai) {
+        setFormData(data => formDataWithUpdatedKeyColor(
+          data,
+          convertOklchToJsonString(ai),
+        ));
+      } else {
+        toastWarning('Could not generate key color');
+      }
+    } catch (error: any) {
+      toastWarning(error.message || 'Could not generate key color');
+    } finally {
+      setIsLoadingKeyColor(false);
+    }
+  }, [url]);
 
   useEffect(() => {
     if (updatedBlurData) {
@@ -248,6 +297,8 @@ export default function PhotoForm({
         return aiContent?.isLoadingTags;
       case 'semanticDescription':
         return aiContent?.isLoadingSemantic;
+      case 'keyColor':
+        return isLoadingKeyColor;
       default:
         return false;
     }
@@ -286,6 +337,21 @@ export default function PhotoForm({
             aiContent={aiContent}
             requestFields={['semantic']}
             shouldConfirm={Boolean(formData.semanticDescription)}
+          />;
+        case 'keyColor':
+          return <LoaderButton
+            tabIndex={-1}
+            icon={<HiSparkles size={16} />}
+            className="h-full"
+            isLoading={isLoadingKeyColor}
+            onClick={() => {
+              if (
+                !formData.keyColor ||
+                confirm('Are you sure you want to overwrite existing content?')
+              ) {
+                regenerateKeyColor();
+              }
+            }}
           />;
         case 'blurData':
           return shouldDebugImageFallbacks && type === 'edit' && formData.url
@@ -354,6 +420,13 @@ export default function PhotoForm({
       !shouldDebugImageFallbacks
     ) {
       return true;
+    } else if (
+      hasLocationServices &&
+      (key === 'location' || key === 'locationDisplayName') &&
+      !formData.location &&
+      !isLoadingPlace
+    ) {
+      return true;
     } else {
       return (
         (hideIfEmpty && !formData[key]) ||
@@ -374,6 +447,26 @@ export default function PhotoForm({
   // Recipe data copied in from a chosen title can be replaced by subsequent
   // titles, and is never used to search for photos needing that title
   const [copiedRecipeData, setCopiedRecipeData] = useState<string>();
+
+  const initialPlace = useMemo(() => {
+    try {
+      return convertPlaceToAutocomplete(
+        initialPhotoForm.location
+          ? JSON.parse(initialPhotoForm.location) as Place
+          : undefined,
+      );
+    } catch {
+      return undefined;
+    }
+  }, [initialPhotoForm.location]);
+
+  const setPlace = useCallback((place?: Place) => {
+    setFormData(data => ({
+      ...data,
+      location: place ? JSON.stringify(place) : '',
+      locationDisplayName: place?.nameFormatted ?? place?.name ?? '',
+    }));
+  }, []);
 
   const didCopyRecipeData =
     Boolean(formData.recipeData) &&
@@ -396,6 +489,7 @@ export default function PhotoForm({
       ),
       aiContent !== undefined,
       shouldStripGpsData,
+      hasLocationServices,
     ), [
     uniqueTags,
     appText,
@@ -405,6 +499,7 @@ export default function PhotoForm({
     detectedFilm,
     aiContent,
     shouldStripGpsData,
+    hasLocationServices,
   ]);
 
   const ref = useRef<HTMLImageElement>(null);
@@ -425,12 +520,12 @@ export default function PhotoForm({
       blurCompatibilityLevel="none"
       width={thumbnailDimensions.width}
       height={thumbnailDimensions.height}
-      priority
+      loading="eager"
     />;
 
   return (
     <div className="space-y-4 max-w-[38rem]">
-      <div className="flex gap-2">
+      <div className="relative flex gap-2">
         {thumbnail(true)}
         <div className={clsx(
           'max-md:hidden',
@@ -611,6 +706,42 @@ export default function PhotoForm({
                       footer: footerForField(key),
                     };
                     switch (key) {
+                      case 'locationPlace':
+                        return <PlaceInput
+                          key={key}
+                          initialPlace={initialPlace}
+                          setPlace={setPlace}
+                          setIsLoadingPlace={setIsLoadingPlace}
+                          className="relative z-1"
+                        />;
+                      case 'locationDisplayName':
+                        return <FieldsetWithStatus
+                          key={key}
+                          {...fieldProps}
+                          value={formData.locationDisplayName ?? ''}
+                          readOnly={isLoadingPlace}
+                          onChange={value => setFormData(data => {
+                            let location = data.location;
+                            try {
+                              const parsed = location
+                                ? JSON.parse(location) as Place
+                                : undefined;
+                              if (parsed) {
+                                location = JSON.stringify({
+                                  ...parsed,
+                                  nameFormatted: value,
+                                });
+                              }
+                            } catch {
+                              // Keep existing location JSON
+                            }
+                            return {
+                              ...data,
+                              locationDisplayName: value,
+                              location,
+                            };
+                          })}
+                        />;
                       case 'film':
                         return <FieldsetWithStatus
                           key={key}
@@ -651,7 +782,43 @@ export default function PhotoForm({
                             // eslint-disable-next-line max-len
                             colorData={generateColorDataFromString(formData.colorData)}
                           />}
+                          onChange={value => {
+                            const formUpdated = formDataWithUpdatedColorData(
+                              formData,
+                              value,
+                            );
+                            setFormData(formUpdated);
+                          }}
                         />;
+                      case 'keyColor': {
+                        const keyColorOklch =
+                          convertJsonStringToOklch(formData.keyColor) ??
+                          generateColorDataFromString(
+                            formData.colorData,
+                          )?.ai;
+                        return <FieldsetWithStatus
+                          key={key}
+                          {...fieldProps}
+                          noteComplex={keyColorOklch &&
+                            <ColorDot
+                              className="size-[13px]!"
+                              color={keyColorOklch}
+                            />}
+                          onChange={value => {
+                            const formUpdated = formDataWithUpdatedKeyColor(
+                              formData,
+                              value,
+                            );
+                            setFormData(formUpdated);
+                            if (validate) {
+                              setFormErrors({
+                                ...formErrors,
+                                [key]: validate(value),
+                              });
+                            }
+                          }}
+                        />;
+                      }
                       case 'tags':
                         return <FieldsetWithStatus
                           key={key}

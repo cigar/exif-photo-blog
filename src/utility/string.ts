@@ -73,6 +73,9 @@ export const depluralize = (string: string) =>
     ? string.replace(/es$/i, '')
     : string.replace(/s$/i, '');
 
+export const startsWithHangingPunctuation = (text: string) =>
+  /^["'“”‘’„‚«»‹›¿¡(\[{—–-]/.test(text);
+
 export const formatCountDescriptive = (
   count: number,
   verb = 'found',

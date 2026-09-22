@@ -2,7 +2,7 @@
 
 import SubmitButtonWithStatus from '@/components/SubmitButtonWithStatus';
 import Link from 'next/link';
-import { PATH_ADMIN_ALBUMS } from '@/app/path';
+import { PARAM_REDIRECT, PATH_ADMIN_ALBUMS } from '@/app/path';
 import FieldsetWithStatus from '@/components/FieldsetWithStatus';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useAppState } from '@/app/AppState';
@@ -14,6 +14,7 @@ import clsx from 'clsx/lite';
 import PlaceInput from '@/place/PlaceInput';
 import { convertPlaceToAutocomplete, Place } from '@/place';
 import deepEqual from 'fast-deep-equal/es6/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function AdminAlbumForm({
   album,
@@ -25,6 +26,8 @@ export default function AdminAlbumForm({
   children?: ReactNode
 }) {
   const { invalidateSwr } = useAppState();
+  const router = useRouter();
+  const redirectParam = useSearchParams().get(PARAM_REDIRECT);
 
   const [albumForm, setAlbumForm] = useState<Album>(album);
 
@@ -46,7 +49,10 @@ export default function AdminAlbumForm({
 
   return (
     <form
-      action={updateAlbumAction}
+      action={data => updateAlbumAction(data)
+        .then(() => {
+          router.push(redirectParam ?? PATH_ADMIN_ALBUMS);
+        })}
       className="max-w-[38rem] space-y-4"
     >        
       {ALBUM_FORM_META
@@ -105,7 +111,11 @@ export default function AdminAlbumForm({
           />
         </div>}
       {children}
-      <div className="flex gap-3">
+      <div className={clsx(
+        'flex gap-3 sticky bottom-0',
+        'pb-4 md:pb-8 mt-16',
+        'relative z-10',
+      )}>
         <Link
           className="button"
           href={PATH_ADMIN_ALBUMS}
@@ -115,9 +125,18 @@ export default function AdminAlbumForm({
         <SubmitButtonWithStatus
           disabled={!isFormValid}
           onFormSubmit={invalidateSwr}
+          hideText="never"
+          primary
         >
           Update
         </SubmitButtonWithStatus>
+        <div className={clsx(
+          'absolute -top-16 -left-2 right-0 bottom-0 -z-10',
+          'pointer-events-none',
+          'bg-linear-to-t',
+          'from-white/90 from-60%',
+          'dark:from-black/90 dark:from-50%',
+        )} />
       </div>
     </form>
   );

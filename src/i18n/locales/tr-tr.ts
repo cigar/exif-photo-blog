@@ -50,7 +50,7 @@ export const TEXT: I18N = {
     full: 'Tam',
     grid: 'Izgara',
     viewOptions: 'Görünüm seçenekleri',
-    about: 'Hakkında',
+    library: 'Kütüphane',
     admin: 'Yönetici',
     search: 'Ara',
     prev: 'Önceki',
@@ -58,7 +58,7 @@ export const TEXT: I18N = {
     next: 'Sonraki',
     nextShort: 'Sonraki',
   },
-  about: {
+  library: {
     titleDefault: 'Site hakkında',
     updated: '{{distance}} önce güncellendi',
     photoCount: 'Fotoğraf sayısı',
@@ -70,9 +70,6 @@ export const TEXT: I18N = {
     recentAlbum: 'Son albüm',
     popularTag: 'Popüler etiket',
     popularPlace: 'Popüler yer',
-  },
-  footer: {
-    madeWith: 'Hazırlayan:',
   },
   sort: {
     sort: 'Sırala',
@@ -157,6 +154,8 @@ export const TEXT: I18N = {
     download: 'İndir',
     sync: 'Senkronize Et',
     syncAutomatic: 'Otomatik',
+    syncUpdateColor: 'Rengi güncelle',
+    syncUpdateColorSuccess: 'Renk güncellendi:',
     syncOverwrite: 'Üzerine Yaz',
     // eslint-disable-next-line max-len
     syncOverwriteConfirm: 'Tüm fotoğraf alanlarının üzerine yazmak istediğinize emin misiniz? Özelleştirilmiş veriler kaybolabilir.',
@@ -215,8 +214,10 @@ export const TEXT: I18N = {
     tryAgain: 'Tekrar Dene',
     finishing: 'Tamamlanıyor ...',
     uploading: 'Yükleniyor',
+    cancel: 'İptal',
     copyPhrase: '{{label}} kopyalandı',
     paginate: '{{count}} fotoğrafın {{index}}.si',
     paginateAction: '{{action}} - {{count}} fotoğrafın {{index}}.si',
+    madeWith: 'Hazırlayan:',
   },
 };

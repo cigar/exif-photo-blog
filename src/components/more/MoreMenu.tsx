@@ -3,6 +3,8 @@ import {
   ReactNode,
   useCallback,
   useEffect,
+  useId,
+  useRef,
   useState,
 } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -12,6 +14,21 @@ import MoreMenuItem from './MoreMenuItem';
 import { clearGlobalFocus } from '@/utility/dom';
 import { FaChevronRight } from 'react-icons/fa6';
 import { MENU_SURFACE_STYLES } from '../primitives/surface';
+
+type MoreMenuOpenListener = (menuId: string) => void;
+
+const moreMenuOpenListeners = new Set<MoreMenuOpenListener>();
+
+const subscribeToMoreMenuOpen = (listener: MoreMenuOpenListener) => {
+  moreMenuOpenListeners.add(listener);
+  return () => {
+    moreMenuOpenListeners.delete(listener);
+  };
+};
+
+const notifyMoreMenuOpen = (menuId: string) => {
+  moreMenuOpenListeners.forEach(listener => listener(menuId));
+};
 
 export type MoreMenuSubmenu = {
   label: string
@@ -62,10 +79,24 @@ export default function MoreMenu({
   onOpen?: () => void
   disabled?: boolean
 } & ComponentProps<typeof DropdownMenu.Content>){
+  const menuId = useId();
   const [isOpenInternal, setIsOpenInternal] = useState(isOpenProp ?? false);
+  const setOpenStateRef = useRef(setIsOpenProp ?? setIsOpenInternal);
+  setOpenStateRef.current = setIsOpenProp ?? setIsOpenInternal;
 
   const isOpen = isOpenProp ?? isOpenInternal;
-  const setIsOpen = setIsOpenProp ?? setIsOpenInternal;
+
+  const setIsOpen = useCallback((open: boolean) => {
+    // Close other more menus before this one opens
+    if (open) { notifyMoreMenuOpen(menuId); }
+    setOpenStateRef.current(open);
+  }, [menuId]);
+
+  useEffect(() => subscribeToMoreMenuOpen(openMenuId => {
+    if (openMenuId !== menuId) {
+      setOpenStateRef.current(false);
+    }
+  }), [menuId]);
 
   const dismissMenu = useCallback(() => {
     setIsOpen(false);

@@ -34,7 +34,7 @@ type VirtualFields =
 
 export type FormFields = keyof PhotoDbInsert | VirtualFields;
 
-export type PhotoFormData = Record<FormFields, string>
+export type PhotoFormData = Record<FormFields, string>;
 
 export type FieldSetType =
   'text' |
@@ -78,6 +78,7 @@ export type FormMeta = {
   tagOptionsLimit?: number
   tagOptionsLimitValidationMessage?: string
   tagOptionsShouldParameterize?: boolean
+  tagOptionsShouldRevealRawText?: boolean
   isJson?: boolean
   staticValue?: string
 };
@@ -85,10 +86,32 @@ export type FormMeta = {
 const STRING_MAX_LENGTH_SHORT = 255;
 const STRING_MAX_LENGTH_LONG  = 1000;
 
+// Omit options entirely (an empty array still renders the dropdown)
+const tagOptionsForAutocomplete = (
+  options?: AnnotatedTag[],
+): Pick<
+  FormMeta,
+  'tagOptions' |
+  'tagOptionsLimit' |
+  'tagOptionsShouldParameterize' |
+  'tagOptionsShouldRevealRawText'
+> => options && options.length > 0
+  ? {
+    tagOptions: options,
+    tagOptionsLimit: 1,
+    tagOptionsShouldParameterize: false,
+    tagOptionsShouldRevealRawText: true,
+  }
+  : {};
+
 const FORM_METADATA = (
   tagOptions?: AnnotatedTag[],
   recipeOptions?: AnnotatedTag[],
   filmOptions?: AnnotatedTag[],
+  cameraMakeOptions?: AnnotatedTag[],
+  cameraModelOptions?: AnnotatedTag[],
+  lensMakeOptions?: AnnotatedTag[],
+  lensModelOptions?: AnnotatedTag[],
   hasAiContentGeneration?: boolean,
   shouldStripGpsData?: boolean,
   hasLocationServices?: boolean,
@@ -157,10 +180,12 @@ const FORM_METADATA = (
   make: {
     section: 'exif',
     label: 'camera make',
+    ...tagOptionsForAutocomplete(cameraMakeOptions),
   },
   model: {
     section: 'exif',
     label: 'camera model',
+    ...tagOptionsForAutocomplete(cameraModelOptions),
   },
   film: {
     section: 'exif',
@@ -221,8 +246,16 @@ const FORM_METADATA = (
     section: 'exif',
     label: 'focal length 35mm-equivalent',
   },
-  lensMake: { section: 'exif', label: 'lens make' },
-  lensModel: { section: 'exif', label: 'lens model' },
+  lensMake: {
+    section: 'exif',
+    label: 'lens make',
+    ...tagOptionsForAutocomplete(lensMakeOptions),
+  },
+  lensModel: {
+    section: 'exif',
+    label: 'lens model',
+    ...tagOptionsForAutocomplete(lensModelOptions),
+  },
   fNumber: { section: 'exif', label: 'aperture' },
   iso: { section: 'exif', label: 'ISO' },
   exposureTime: { section: 'exif', label: 'exposure time' },
@@ -420,7 +453,7 @@ export const isFormValid = (formData: Partial<PhotoFormData>) =>
     ([key, { required, validate, validateStringMaxLength }]) =>
       (!required || Boolean(formData[key])) &&
       (!validate?.(formData[key])) &&
-      // eslint-disable-next-line max-len
+      // eslint-disable-next-line @stylistic/max-len
       (!validateStringMaxLength || (formData[key]?.length ?? 0) <= validateStringMaxLength),
   );
 

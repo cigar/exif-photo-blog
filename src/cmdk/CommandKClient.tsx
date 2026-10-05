@@ -131,13 +131,13 @@ type CommandKItem = {
   annotationAria?: string
   path?: string
   action?: () => void | Promise<void | boolean>
-}
+};
 
 type CommandKSection = {
   heading: string
   accessory?: ReactNode
   items: CommandKItem[]
-}
+};
 
 const renderCheck = (isChecked?: boolean) =>
   isChecked
@@ -436,12 +436,14 @@ export default function CommandKClient({
           case 'albums': return {
             heading,
             accessory: <IconAlbum size={14} />,
-            items: albums.map(({ album, count }) => ({
-              label: album.title,
-              annotation: formatCount(count),
-              annotationAria: formatCountDescriptive(count),
-              path: pathForAlbum(album),
-            })),
+            items: albums
+              .filter(({ count }) => count > 0)
+              .map(({ album, count }) => ({
+                label: album.title,
+                annotation: formatCount(count),
+                annotationAria: formatCountDescriptive(count),
+                path: pathForAlbum(album),
+              })),
           };
           case 'tags': return {
             heading,

@@ -2,34 +2,46 @@
 
 import SubmitButtonWithStatus from '@/components/SubmitButtonWithStatus';
 import Link from 'next/link';
-import { PARAM_REDIRECT, PATH_ADMIN_ALBUMS } from '@/app/path';
+import { PATH_ADMIN_ALBUMS } from '@/app/path';
 import FieldsetWithStatus from '@/components/FieldsetWithStatus';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useAppState } from '@/app/AppState';
 import { Album } from '@/album';
 import { ALBUM_FORM_META } from '@/album/form';
 import { parameterize } from '@/utility/string';
-import { updateAlbumAction } from '@/album/actions';
+import { createAlbumAction, updateAlbumAction } from '@/album/actions';
 import clsx from 'clsx/lite';
 import PlaceInput from '@/place/PlaceInput';
 import { convertPlaceToAutocomplete, Place } from '@/place';
 import deepEqual from 'fast-deep-equal/es6/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function AdminAlbumForm({
-  album,
+  album = {
+    id: '',
+    title: '',
+    slug: '',
+  },
   hasLocationServices,
   children,
+  mode = 'edit',
+  onTitleChange,
+  redirectPath,
 }: {
-  album: Album
+  album?: Album
   hasLocationServices?: boolean
   children?: ReactNode
+  mode?: 'edit' | 'create'
+  onTitleChange?: (title: string) => void
+  redirectPath?: string
 }) {
   const { invalidateSwr } = useAppState();
   const router = useRouter();
-  const redirectParam = useSearchParams().get(PARAM_REDIRECT);
+
+  const isCreating = mode === 'create';
 
   const [albumForm, setAlbumForm] = useState<Album>(album);
+  const [formError, setFormError] = useState('');
 
   const initialPlace = useMemo(() =>
     convertPlaceToAutocomplete(album.location),
@@ -49,12 +61,19 @@ export default function AdminAlbumForm({
 
   return (
     <form
-      action={data => updateAlbumAction(data)
-        .then(() => {
-          router.push(redirectParam ?? PATH_ADMIN_ALBUMS);
-        })}
+      action={async data => {
+        const submit = isCreating ? createAlbumAction : updateAlbumAction;
+        return submit(data)
+          .then(result => {
+            if (result && 'error' in result && result.error) {
+              setFormError(result.error);
+              return;
+            }
+            router.push(redirectPath ?? PATH_ADMIN_ALBUMS);
+          });
+      }}
       className="max-w-[38rem] space-y-4"
-    >        
+    >
       {ALBUM_FORM_META
         .map(({ key, label, type, readOnly }) => (
           <FieldsetWithStatus
@@ -63,14 +82,20 @@ export default function AdminAlbumForm({
             type={type}
             label={label ?? key}
             value={albumForm[key] ? `${albumForm[key]}` : ''}
-            onChange={value => setAlbumForm(form => ({
-              ...form,
-              [key]: value,
-              ...key === 'title' && { slug: parameterize(value) },
-            }))
-            }
+            onChange={value => {
+              if (key === 'title') {
+                setFormError('');
+                onTitleChange?.(value);
+              }
+              setAlbumForm(form => ({
+                ...form,
+                [key]: value,
+                ...key === 'title' && { slug: parameterize(value) },
+              }));
+            }}
             isModified={albumForm[key] !== album[key]}
             readOnly={readOnly}
+            error={key === 'title' ? formError : undefined}
             className={clsx(key === 'description' && '[&_textarea]:h-36')}
           />))}
       {hasLocationServices &&
@@ -84,7 +109,7 @@ export default function AdminAlbumForm({
         <div className="space-y-4 w-full">
           <FieldsetWithStatus
             label="Location Display Name"
-            // eslint-disable-next-line max-len
+            // eslint-disable-next-line @stylistic/max-len
             value={albumForm.location?.nameFormatted ?? albumForm.location?.name ?? ''}
             onChange={value => setAlbumForm(form => ({
               ...form,
@@ -93,7 +118,7 @@ export default function AdminAlbumForm({
               },
             }))}
             isModified={
-              // eslint-disable-next-line max-len
+              // eslint-disable-next-line @stylistic/max-len
               (albumForm.location?.nameFormatted ?? albumForm.location?.name) !==
               (album.location?.nameFormatted ?? album.location?.name)
             }
@@ -128,7 +153,7 @@ export default function AdminAlbumForm({
           hideText="never"
           primary
         >
-          Update
+          {isCreating ? 'Create' : 'Update'}
         </SubmitButtonWithStatus>
         <div className={clsx(
           'absolute -top-16 -left-2 right-0 bottom-0 -z-10',

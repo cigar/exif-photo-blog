@@ -1,4 +1,4 @@
-/* eslint-disable quotes */
+/* eslint-disable @stylistic/quotes */
 import {
   sql,
   query,
@@ -309,7 +309,7 @@ export const getPhotosMostRecentUpdate = async () =>
   `.then(({ rows }) => rows[0] ? rows[0].updated_at as Date : undefined)
   , 'getPhotosMostRecentUpdate');
 
-export const getUniqueCameras = async () =>
+export const getUniqueCameras = async (includeHidden?: boolean) =>
   safelyQuery(() => query(`
     SELECT
       MIN(make) AS make,
@@ -317,9 +317,9 @@ export const getUniqueCameras = async () =>
       COUNT(*) AS count,
       MAX(updated_at) AS last_modified
     FROM photos
-    WHERE hidden IS NOT TRUE
-    AND trim(make) <> ''
+    WHERE trim(make) <> ''
     AND trim(model) <> ''
+    ${includeHidden ? '' : 'AND hidden IS NOT TRUE'}
     GROUP BY
       ${parameterizeForDb('make')},
       ${parameterizeForDb('model')}
@@ -334,7 +334,7 @@ export const getUniqueCameras = async () =>
   })))
   , 'getUniqueCameras');
 
-export const getUniqueLenses = async () =>
+export const getUniqueLenses = async (includeHidden?: boolean) =>
   safelyQuery(() => query(`
     SELECT
       MIN(lens_make) AS lens_make,
@@ -342,8 +342,8 @@ export const getUniqueLenses = async () =>
       COUNT(*) AS count,
       MAX(updated_at) AS last_modified
     FROM photos
-    WHERE hidden IS NOT TRUE
-    AND trim(lens_model) <> ''
+    WHERE trim(lens_model) <> ''
+    ${includeHidden ? '' : 'AND hidden IS NOT TRUE'}
     GROUP BY
       ${parameterizeForDb('lens_make')},
       ${parameterizeForDb('lens_model')}
@@ -702,7 +702,7 @@ export const getPhoto = async (
     const photoId = translatePhotoId(id);
     return (includeHidden
       ? sql<PhotoDb>`SELECT * FROM photos WHERE id=${photoId} LIMIT 1`
-      // eslint-disable-next-line max-len
+      // eslint-disable-next-line @stylistic/max-len
       : sql<PhotoDb>`SELECT * FROM photos WHERE id=${photoId} AND hidden IS NOT TRUE LIMIT 1`)
       .then(({ rows }) => rows.map(parsePhotoFromDb))
       .then(photos => photos.length > 0 ? photos[0] : undefined);

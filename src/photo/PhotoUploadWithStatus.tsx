@@ -22,6 +22,8 @@ export default function PhotoUploadWithStatus({
   onLastUpload,
   showStatusText = true,
   showButton = true,
+  primary = true,
+  expandStatus = false,
   className,
   debug,
 }: {
@@ -31,6 +33,8 @@ export default function PhotoUploadWithStatus({
   onLastUpload?: () => Promise<void>
   showStatusText?: boolean
   showButton?: boolean
+  primary?: boolean
+  expandStatus?: boolean
   className?: string
   debug?: boolean
 }) {
@@ -88,16 +92,18 @@ export default function PhotoUploadWithStatus({
     ? appText.utility.paginate(fileUploadIndex + 1, filesLength)
     : undefined;
 
-  const showCancel = isUploading && !isFinishing && !uploadError;
+  const showCancel = isUploading && !uploadError;
 
   return (
     <div className={clsx(
       'flex items-center gap-4',
       isUploading && 'cursor-not-allowed',
+      expandStatus && 'w-full',
       className,
     )}>
       <div className={clsx(
         showButton ? 'flex items-center gap-2' : 'hidden',
+        expandStatus && 'shrink-0',
       )}>
         <ImageInput
           ref={inputRef}
@@ -161,11 +167,13 @@ export default function PhotoUploadWithStatus({
             }
           }}
           showButton={showButton}
+          primary={primary}
           debug={debug}
         />
         {showButton && showCancel &&
           <LoaderButton
-            className="cursor-pointer"
+            className={isFinishing ? undefined : 'cursor-pointer'}
+            disabled={isFinishing}
             onClick={cancelUpload}
             icon={<IoCloseSharp
               size={18}
@@ -178,8 +186,9 @@ export default function PhotoUploadWithStatus({
       {showStatusText && <div className={clsx(
         'flex flex-col gap-1.5 min-w-0 overflow-hidden',
         !showButton && 'w-full',
+        expandStatus && 'grow text-left',
       )}>
-        <div className="flex items-center gap-4 overflow-hidden">
+        <div className="flex w-full items-center gap-4 overflow-hidden">
           {isUploading && !showButton &&
             <Spinner
               className="text-dim translate-y-[1px]"

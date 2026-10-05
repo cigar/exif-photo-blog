@@ -59,6 +59,16 @@ import deepEqual from 'fast-deep-equal/es6/react';
 import ApplyRecipeTitleGloballyCheckbox from './ApplyRecipesGloballyCheckbox';
 import FieldsetRecipeData from './FieldsetRecipeData';
 import { convertFilmsForForm, Films } from '@/film';
+import {
+  Cameras,
+  convertCameraMakesForForm,
+  convertCameraModelsForForm,
+} from '@/camera';
+import {
+  Lenses,
+  convertLensMakesForForm,
+  convertLensModelsForForm,
+} from '@/lens';
 import { isMakeFujifilm } from '@/platforms/fujifilm';
 import PhotoFilmIcon from '@/film/PhotoFilmIcon';
 import FieldsetFavs from './FieldsetFavs';
@@ -88,7 +98,7 @@ import { TbPhoto } from 'react-icons/tb';
 import { Albums } from '@/album';
 import FieldsetAlbum from '@/album/FieldsetAlbum';
 import Form from 'next/form';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import DateTimePicker from '@/components/DateTimePicker';
 
 const THUMBNAIL_SIZE = 300;
@@ -104,6 +114,8 @@ export default function PhotoForm({
   uniqueTags,
   uniqueRecipes,
   uniqueFilms,
+  uniqueCameras,
+  uniqueLenses,
   aiContent,
   shouldStripGpsData,
   hasLocationServices,
@@ -121,6 +133,8 @@ export default function PhotoForm({
   uniqueTags: Tags
   uniqueRecipes: Recipes
   uniqueFilms: Films
+  uniqueCameras?: Cameras
+  uniqueLenses?: Lenses
   aiContent?: AiContent
   shouldStripGpsData?: boolean
   hasLocationServices?: boolean
@@ -128,8 +142,6 @@ export default function PhotoForm({
   onFormDataChange?: (formData: Partial<PhotoFormData>) => void,
   onFormStatusChange?: (pending: boolean) => void
 }) {
-  const router = useRouter();
-
   const redirectParam = useSearchParams().get(PARAM_REDIRECT);
 
   const [formData, setFormData] =
@@ -487,6 +499,10 @@ export default function PhotoForm({
         detectedFilm,
         formData.make,
       ),
+      convertCameraMakesForForm(uniqueCameras),
+      convertCameraModelsForForm(uniqueCameras),
+      convertLensMakesForForm(uniqueLenses),
+      convertLensModelsForForm(uniqueLenses),
       aiContent !== undefined,
       shouldStripGpsData,
       hasLocationServices,
@@ -495,6 +511,8 @@ export default function PhotoForm({
     appText,
     uniqueRecipes,
     uniqueFilms,
+    uniqueCameras,
+    uniqueLenses,
     formData.make,
     detectedFilm,
     aiContent,
@@ -601,10 +619,7 @@ export default function PhotoForm({
         action={data => (type === 'create'
           ? createPhotoAction
           : updatePhotoAction
-        )(data)
-          .then(() => {
-            router.push(redirectParam ?? PATH_ADMIN_PHOTOS);
-          })
+        )(data, redirectParam ?? PATH_ADMIN_PHOTOS)
           .catch(e => {
             if (e.message !== 'NEXT_REDIRECT') {
               setFormActionErrorMessage(e.message);
@@ -635,6 +650,7 @@ export default function PhotoForm({
                   tagOptionsLimit,
                   tagOptionsLimitValidationMessage,
                   tagOptionsShouldParameterize,
+                  tagOptionsShouldRevealRawText,
                   readOnly,
                   hideModificationStatus,
                   validate,
@@ -648,7 +664,7 @@ export default function PhotoForm({
                   staticValue,
                 }]) => {
                   if (!isFieldHidden(key, hideIfEmpty, shouldHide)) {
-                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @stylistic/max-len
                     const fieldProps: ComponentProps<typeof FieldsetWithStatus> = {
                       id: key,
                       label: label + (
@@ -690,6 +706,7 @@ export default function PhotoForm({
                       tagOptionsLimit,
                       tagOptionsLimitValidationMessage,
                       tagOptionsShouldParameterize,
+                      tagOptionsShouldRevealRawText,
                       required,
                       readOnly,
                       spellCheck,
@@ -779,7 +796,7 @@ export default function PhotoForm({
                           {...fieldProps}
                           noteComplex={<PhotoColors
                             classNameDot="size-[13px]!"
-                            // eslint-disable-next-line max-len
+                            // eslint-disable-next-line @stylistic/max-len
                             colorData={generateColorDataFromString(formData.colorData)}
                           />}
                           onChange={value => {

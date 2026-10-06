@@ -43,7 +43,8 @@ import { useAppState } from '@/app/AppState';
 import { LuExpand } from 'react-icons/lu';
 import LoaderButton from '@/components/primitives/LoaderButton';
 import Tooltip from '@/components/Tooltip';
-import ZoomControls, { ZoomControlsRef } from '@/components/image/ZoomControls';
+import ZoomControls, { ZoomControlsRef }
+  from '@/components/image/zoom/ZoomControls';
 import { AnimatePresence } from 'framer-motion';
 import useRecipeOverlay from '../recipe/useRecipeOverlay';
 import PhotoRecipeOverlay from '@/recipe/PhotoRecipeOverlay';
@@ -449,7 +450,7 @@ export default function PhotoLarge({
                           </Link>}
                         {(
                           photo.focalLengthIn35MmFormatFormatted &&
-                          // eslint-disable-next-line max-len
+                          // eslint-disable-next-line @stylistic/max-len
                           photo.focalLengthIn35MmFormatFormatted !== photo.focalLengthFormatted
                         ) &&
                           <>

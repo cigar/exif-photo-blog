@@ -11,12 +11,12 @@ import {
   PATH_ADMIN_UPLOADS,
 } from '@/app/path';
 import { useAppState } from '@/app/AppState';
+import { useUploadState } from '@/admin/upload/UploadState';
 import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
 import { clsx } from 'clsx/lite';
 import AdminAppInfoIcon from './AdminAppInfoIcon';
 import { signOutAction } from '@/auth/actions';
-import { ComponentProps, useMemo } from 'react';
-import useIsKeyBeingPressed from '@/utility/useIsKeyBeingPressed';
+import { useMemo } from 'react';
 import IconPhoto from '@/components/icons/IconPhoto';
 import IconUpload from '@/components/icons/IconUpload';
 import IconRecipe from '@/components/icons/IconRecipe';
@@ -25,7 +25,6 @@ import IconFolder from '@/components/icons/IconFolder';
 import IconSignOut from '@/components/icons/IconSignOut';
 import IconBroom from '@/components/icons/IconBroom';
 import InsightsIndicatorDot from './insights/InsightsIndicatorDot';
-import MoreMenuItem from '@/components/more/MoreMenuItem';
 import Spinner from '@/components/Spinner';
 import { useAppText } from '@/i18n/state/client';
 import SwitcherItemMenu from '@/components/switcher/SwitcherItemMenu';
@@ -40,6 +39,15 @@ import {
   SWITCHER_ITEM_WIDTH,
 } from '@/components/switcher/SwitcherItem';
 import { TbSquareRoundedCheck, TbSquareRoundedX } from 'react-icons/tb';
+
+const labelWithTrailingEllipsis = (text: string) => {
+  const match = text.match(/^(.*?)\s*(\.{3}|…)\s*$/);
+  if (!match?.[1]) { return { label: text }; }
+  return {
+    label: match[1],
+    annotation: match[2],
+  };
+};
 
 export default function AdminAppMenu({
   isOpen,
@@ -56,10 +64,11 @@ export default function AdminAppMenu({
     tagsCount = 0,
     recipesCount = 0,
     isLoadingAdminData,
-    startUpload,
     refreshAdminData,
     clearAuthStateAndRedirectIfNecessary,
   } = useAppState();
+
+  const { startUpload } = useUploadState();
 
   const {
     isSelectingPhotos,
@@ -75,10 +84,6 @@ export default function AdminAppMenu({
 
   const appText = useAppText();
 
-  const isAltPressed = useIsKeyBeingPressed('alt');
-
-  const showAppInsightsLink = photosCountTotal > 0 && !isAltPressed;
-
   const sectionUpload: MoreMenuSection = useMemo(() => ({ items: [{
     label: appText.admin.uploadPhotos,
     icon: <IconUpload
@@ -91,7 +96,7 @@ export default function AdminAppMenu({
   }]}), [appText, isLoadingAdminData, startUpload]);
 
   const sectionMain: MoreMenuSection = useMemo(() => {
-    const items: ComponentProps<typeof MoreMenuItem>[] = [];
+    const items: MoreMenuSection['items'] = [];
 
     if (uploadsCount) {
       items.push({
@@ -172,9 +177,9 @@ export default function AdminAppMenu({
     }
     if (photosCountTotal) {
       items.push({
-        label: isSelectingPhotos
+        ...labelWithTrailingEllipsis(isSelectingPhotos
           ? appText.admin.selectPhotosExit
-          : appText.admin.selectPhotos,
+          : appText.admin.selectPhotos),
         icon: isSelectingPhotos
           ? <TbSquareRoundedX
             size={17}
@@ -189,9 +194,9 @@ export default function AdminAppMenu({
           : startSelectingPhotos,
       });
       items.push({
-        label: isEditingTitles
+        ...labelWithTrailingEllipsis(isEditingTitles
           ? appText.admin.editTitlesExit
-          : appText.admin.editTitles,
+          : appText.admin.editTitles),
         icon: isEditingTitles
           ? <FiXSquare
             size={15}
@@ -207,16 +212,18 @@ export default function AdminAppMenu({
       });
     }
     items.push({
-      label: showAppInsightsLink
-        ? appText.admin.appInsights
-        : appText.admin.appConfig,
+      label: appText.admin.app,
       icon: <AdminAppInfoIcon
         size="small"
         className="translate-x-[-0.5px]"
       />,
-      href: showAppInsightsLink
-        ? PATH_ADMIN_INSIGHTS
-        : PATH_ADMIN_CONFIGURATION,
+      items: [{
+        label: appText.admin.appInsightsShort,
+        href: PATH_ADMIN_INSIGHTS,
+      }, {
+        label: appText.admin.appConfigShort,
+        href: PATH_ADMIN_CONFIGURATION,
+      }],
     });
 
     return { items };
@@ -231,7 +238,6 @@ export default function AdminAppMenu({
     photosCountNeedSync,
     photosCountTotal,
     recipesCount,
-    showAppInsightsLink,
     albumsCount,
     tagsCount,
     uploadsCount,

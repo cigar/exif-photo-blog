@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+/* eslint-disable @stylistic/max-len */
 import { Photo } from '@/photo';
 import { PhotoSetCategory } from '@/category';
 import { getBaseUrl, GRID_HOMEPAGE_ENABLED } from './config';
@@ -76,6 +76,7 @@ export const PATH_ADMIN_PHOTOS          = `${PATH_ADMIN}/photos`;
 export const PATH_ADMIN_PHOTOS_UPDATES  = `${PATH_ADMIN_PHOTOS}/updates`;
 export const PATH_ADMIN_UPLOADS         = `${PATH_ADMIN}/uploads`;
 export const PATH_ADMIN_ALBUMS          = `${PATH_ADMIN}/albums`;
+export const PATH_ADMIN_ALBUM_NEW       = `${PATH_ADMIN_ALBUMS}/new`;
 export const PATH_ADMIN_TAGS            = `${PATH_ADMIN}/tags`;
 export const PATH_ADMIN_RECIPES         = `${PATH_ADMIN}/recipes`;
 export const PATH_ADMIN_CONFIGURATION   = `${PATH_ADMIN}/configuration`;
@@ -499,6 +500,9 @@ export const isPathTopLevelAdmin = (pathname?: string) =>
 
 export const isPathAdminPhotos = (pathname?: string) =>
   checkPathPrefix(pathname, PATH_ADMIN_PHOTOS);
+
+export const isPathAdminPhotoEdit = (pathname = '') =>
+  new RegExp(`^${PATH_ADMIN_PHOTOS}/[^/]+/${EDIT}/?$`).test(pathname);
 
 export const isPathAdminInsights = (pathname?: string) =>
   checkPathPrefix(pathname, PATH_ADMIN_INSIGHTS);

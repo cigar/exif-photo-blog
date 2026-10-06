@@ -43,6 +43,7 @@ import {
 } from '@/cache';
 import { revalidatePhoto, getPhotosCached } from './cache';
 import {
+  PATH_ADMIN_PHOTOS,
   PATH_ADMIN_RECIPES,
   PATH_ADMIN_TAGS,
   PATH_ROOT,
@@ -101,7 +102,10 @@ import {
 
 // Private actions
 
-export const createPhotoAction = async (formData: FormData) =>
+export const createPhotoAction = async (
+  formData: FormData,
+  redirectPath = PATH_ADMIN_PHOTOS,
+) =>
   runAuthenticatedAdminServerAction(async () => {
     const shouldStripGpsData = formData.get('shouldStripGpsData') === 'true';
 
@@ -121,6 +125,7 @@ export const createPhotoAction = async (formData: FormData) =>
       await addAlbumTitlesToPhoto(albumTitles, photo.id, false);
       await propagateRecipeTitleIfNecessary(formData, photo);
       revalidateAllKeysAndPaths();
+      redirect(redirectPath);
     }
   });
 
@@ -314,7 +319,7 @@ export const addUploadsAction = async ({
           });
         };
       } catch (error: any) {
-        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @stylistic/max-len
         stream.error(`${error.message} (${addedUploadUrls.length} of ${uploadUrls.length} photos successfully added)`);
       }
       stream.done();
@@ -327,7 +332,10 @@ export const addUploadsAction = async ({
     return stream.value;
   });
 
-export const updatePhotoAction = async (formData: FormData) =>
+export const updatePhotoAction = async (
+  formData: FormData,
+  redirectPath = PATH_ADMIN_PHOTOS,
+) =>
   runAuthenticatedAdminServerAction(async () => {
     const photo =
       await convertFormDataToPhotoDbInsertAndLookupRecipeTitle(formData);
@@ -356,6 +364,7 @@ export const updatePhotoAction = async (formData: FormData) =>
       });
 
     revalidateAllKeysAndPaths();
+    redirect(redirectPath);
   });
 
 export const toggleFavoritePhotoAction = async (

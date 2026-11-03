@@ -32,6 +32,7 @@ _Submit your site as an example by [opening an issue](https://github.com/sambeck
 - AI-generated text descriptions
 - RSS/JSON feeds
 - Support for Fujifilm recipes and film simulations
+- OM SYSTEM and Olympus color and mono recipes, with galleries for matching settings
 
 <img src="/readme/og-image-share.png" alt="OG Image Preview" width=600 />
 
@@ -162,6 +163,22 @@ To add location meta to entities like photos and albums:
 ### Rate limiting
 
 Create Upstash Redis store from storage tab of Vercel dashboard and link to your project (if required, add environment variable prefix `EXIF`) in order to enable rate limiting—no further configuration necessary.
+
+### Programmatic uploads (optional)
+
+Upload photos from local script:
+
+```sh
+export ADMIN_EMAIL=... ADMIN_PASSWORD=...
+node scripts/photo-import.mjs --base https://photos.example.com upload photo.jpg
+node scripts/photo-import.mjs --base https://photos.example.com list
+```
+
+Requires Node.js v22 or later. Works with Vercel Blob, S3, Cloudflare R2, or MinIO; image bytes go directly to storage, as with admin uploads (Vercel Blob uses this repo's installed `@vercel/blob` package). Script signs in with existing admin credentials; no required server setup:
+
+Uploads are private by default (`--visibility default` sets the same options as the admin photo form) and not idempotent: use `list` to check the result before retrying an uncertain upload.
+
+See [script notes](scripts/README.md) for details.
 
 ### Categories
 - `NEXT_PUBLIC_CATEGORY_VISIBILITY`
@@ -507,6 +524,15 @@ Thank you ❤️ translators: [@sconetto](https://github.com/sconetto) (`pt-br`,
 
 #### Why aren't Fujifilm simulations importing alongside EXIF data?
 > Fujifilm simulation data is stored in vendor-specific Makernote binaries embedded in EXIF data. Under certain circumstances an intermediary may strip out this data. For instance, there is a known issue on iOS where editing an image, e.g., cropping it, causes Makernote data loss. If simulation data appears to be missing, try importing the original file as it was stored by the camera. Additionally, if you can confirm the simulation mode, you can edit the photo and manually select it.
+
+#### How do OM SYSTEM and Olympus recipes work?
+
+> Upload camera-original JPEGs taken with a Color or Monochrome Profile. The photo's "Color recipe" or "Mono recipe" link opens a gallery of photos with matching settings, and the adjacent + button shows the settings themselves. Ordinary picture modes and Art Filters don't produce recipes, and profile slot numbers, exposure compensation, Noise Filter, and Gradation don't affect matching. As with Fujifilm, editing an image on your phone before uploading can strip the data recipes depend on.
+>
+> OM SYSTEM and Olympus photos uploaded before recipe support are flagged in `/admin/photos` until they're synced once.
+
+#### How are recipes titled?
+> When a Fujifilm or OM photo is imported, it uses the custom title already given to photos with matching recipe settings (and film simulation, for Fujifilm). Otherwise, Fujifilm recipes stay untitled, and their settings can be viewed from the film simulation's + button. OM recipes are labeled "Color recipe" or "Mono recipe," and the "auto-title" checkbox next to an OM photo's recipe title switches back to this label after a custom title has been set. Changing a recipe title on a photo renames it on every photo that shares it, and the form shows how many photos will be affected before saving.
 
 #### My Fujifilm recipes are missing/displaying incorrect data. What should I do?
 > If you don't see a recipe, first try syncing your photo from the ••• menu, or from `/admin/photos`. If the data looks incorrect, open an issue with the file in question attached in order for it to be investigated. Fujifilm file specifications have evolved over time and recipe parsing may need to be adjusted based on camera model/vintage.

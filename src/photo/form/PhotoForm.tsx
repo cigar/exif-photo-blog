@@ -3,6 +3,7 @@
 
 import {
   ComponentProps,
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -23,8 +24,11 @@ import {
   isFormValid,
   formDataWithUpdatedColorData,
   formDataWithUpdatedKeyColor,
+  formDataWithSyncedTakenAt,
+  getTakenAtOffsetMsForForm,
 } from '.';
 import FieldsetWithStatus from '@/components/FieldsetWithStatus';
+import Checkbox from '@/components/Checkbox';
 import {
   createPhotoAction,
   getAiColorAction,
@@ -56,7 +60,9 @@ import { convertPlaceToAutocomplete, Place } from '@/place';
 import ErrorNote from '@/components/ErrorNote';
 import { convertRecipesForForm, Recipes } from '@/recipe';
 import deepEqual from 'fast-deep-equal/es6/react';
-import ApplyRecipeTitleGloballyCheckbox from './ApplyRecipesGloballyCheckbox';
+import RecipeTitleHashCheckbox from './RecipeTitleHashCheckbox';
+import RecipeTitleRenameWarning from './RecipeTitleRenameWarning';
+import { canCreateRecipeHashKey, isRecipeHashKey } from '@/recipe/key';
 import FieldsetRecipeData from './FieldsetRecipeData';
 import { convertFilmsForForm, Films } from '@/film';
 import {
@@ -167,6 +173,13 @@ export default function PhotoForm({
   const [formErrors, setFormErrors] =
     useState(getFormErrors(initialPhotoForm));
   const [formActionErrorMessage, setFormActionErrorMessage] = useState('');
+
+  // Last known timezone offset between taken-at fields,
+  // remembered so partially typed dates still sync once valid
+  const [takenAtOffsetMs, setTakenAtOffsetMs] = useState(() =>
+    getTakenAtOffsetMsForForm(initialPhotoForm));
+  const [shouldSyncTakenAt, setShouldSyncTakenAt] = useState(true);
+  const canSyncTakenAt = takenAtOffsetMs !== undefined;
 
   const [detectedFilm, setDetectedFilm] =
     useState(initialPhotoForm.film);
@@ -465,15 +478,6 @@ export default function PhotoForm({
     }
   };
 
-  const onMatchResults = useCallback((didFindMatchingPhotos: boolean) => {
-    setFormData(data => ({
-      ...data,
-      applyRecipeTitleGlobally: didFindMatchingPhotos
-        ? 'true'
-        : 'false',
-    }));
-  }, [setFormData]);
-
   // Recipe data copied in from a chosen title can be replaced by subsequent
   // titles, and is never used to search for photos needing that title
   const [copiedRecipeData, setCopiedRecipeData] = useState<string>();
@@ -725,12 +729,32 @@ export default function PhotoForm({
                         changedFormKeys.includes(key)
                       ),
                       onChange: value => {
-                        const formUpdated = { ...formData, [key]: value };
+                        let formUpdated = { ...formData, [key]: value };
+                        let syncedErrors: Partial<typeof formErrors> = {};
+                        if (key === 'takenAt' || key === 'takenAtNaive') {
+                          formUpdated = formDataWithSyncedTakenAt(
+                            formData,
+                            key,
+                            value,
+                            shouldSyncTakenAt ? takenAtOffsetMs : undefined,
+                          );
+                          setTakenAtOffsetMs(getTakenAtOffsetMsForForm(
+                            formUpdated,
+                            takenAtOffsetMs,
+                          ));
+                          const keySynced = key === 'takenAt'
+                            ? 'takenAtNaive'
+                            : 'takenAt';
+                          if (formUpdated[keySynced] !== formData[keySynced]) {
+                            syncedErrors = { [keySynced]: undefined };
+                          }
+                        }
                         setFormData(formUpdated);
                         if (validate) {
                           setFormErrors({
-                            ...formErrors, [key]:
-                            validate(value),
+                            ...formErrors,
+                            ...syncedErrors,
+                            [key]: validate(value),
                           });
                         } else if (validateStringMaxLength !== undefined) {
                           setFormErrors({
@@ -813,18 +837,28 @@ export default function PhotoForm({
                             <PhotoFilmIcon />
                           </span>}
                         />;
-                      case 'applyRecipeTitleGlobally':
-                        return <ApplyRecipeTitleGloballyCheckbox
+                      case 'recipeTitle':
+                        return <FieldsetWithStatus
                           key={key}
                           {...fieldProps}
-                          photoId={initialPhotoForm.id}
-                          recipeTitle={formData.recipeTitle}
-                          hasRecipeTitleChanged={
-                            changedFormKeys.includes('recipeTitle')}
-                          recipeData={formData.recipeData}
-                          film={formData.film}
-                          didCopyRecipeData={didCopyRecipeData}
-                          onMatchResults={onMatchResults}
+                          readOnly={fieldProps.readOnly ||
+                            isRecipeHashKey(formData.recipeTitle)}
+                          labelAccessory={(
+                            canCreateRecipeHashKey(formData.recipeData) ||
+                            isRecipeHashKey(formData.recipeTitle)
+                          ) && <RecipeTitleHashCheckbox
+                            recipeTitle={formData.recipeTitle}
+                            recipeData={formData.recipeData}
+                            onChange={recipeTitle => setFormData(data =>
+                              ({ ...data, recipeTitle }))}
+                          />}
+                          footer={<RecipeTitleRenameWarning
+                            photoId={initialPhotoForm.id}
+                            previousTitle={initialPhotoForm.recipeTitle}
+                            recipeTitle={formData.recipeTitle}
+                            recipeData={formData.recipeData}
+                            film={formData.film}
+                          />}
                         />;
                       case 'recipeData':
                         return <FieldsetRecipeData
@@ -912,16 +946,42 @@ export default function PhotoForm({
                           className="relative z-2"
                         />;
                       case 'takenAt':
-                        return <FieldsetWithStatus
-                          key={key}
-                          {...fieldProps}
-                          accessory={<DateTimePicker
-                            value={formData.takenAt ?? ''}
-                            onChange={fieldProps.onChange}
-                            type="utc"
-                            readOnly={fieldProps.readOnly}
-                          />}
-                        />;
+                        return <Fragment key={key}>
+                          <label className={clsx(
+                            'flex items-center gap-2 select-none',
+                            canSyncTakenAt
+                              ? 'cursor-pointer'
+                              : 'cursor-not-allowed',
+                          )}>
+                            <Checkbox
+                              checked={canSyncTakenAt && shouldSyncTakenAt}
+                              disabled={!canSyncTakenAt}
+                              readOnly={!canSyncTakenAt}
+                              onChange={e =>
+                                setShouldSyncTakenAt(e.target.checked)}
+                            />
+                            <span className={clsx(
+                              !canSyncTakenAt && 'opacity-50',
+                            )}>
+                              Keep taken at fields in sync
+                            </span>
+                            {!canSyncTakenAt &&
+                              <span className={clsx(
+                                'text-gray-400 dark:text-gray-600',
+                              )}>
+                                (fields are inconsistent)
+                              </span>}
+                          </label>
+                          <FieldsetWithStatus
+                            {...fieldProps}
+                            accessory={<DateTimePicker
+                              value={formData.takenAt ?? ''}
+                              onChange={fieldProps.onChange}
+                              type="utc"
+                              readOnly={fieldProps.readOnly}
+                            />}
+                          />
+                        </Fragment>;
                       case 'takenAtNaive':
                         return <FieldsetWithStatus
                           key={key}

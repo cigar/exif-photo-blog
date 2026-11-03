@@ -19,7 +19,7 @@ import PhotoTags from '@/tag/PhotoTags';
 import ShareButton from '@/share/ShareButton';
 import DownloadButton from '@/components/DownloadButton';
 import PhotoCamera from '../camera/PhotoCamera';
-import { cameraFromPhoto } from '@/camera';
+import { Camera, cameraFromPhoto } from '@/camera';
 import PhotoFilm from '@/film/PhotoFilm';
 import { sortTagsArray } from '@/tag';
 import DivDebugBaselineGrid from '@/components/DivDebugBaselineGrid';
@@ -52,7 +52,7 @@ import useRecipeOverlay from '../recipe/useRecipeOverlay';
 import PhotoRecipeOverlay from '@/recipe/PhotoRecipeOverlay';
 import PhotoRecipe from '@/recipe/PhotoRecipe';
 import PhotoLens from '@/lens/PhotoLens';
-import { lensFromPhoto } from '@/lens';
+import { Lens, lensFromPhoto } from '@/lens';
 import MaskedScroll from '@/components/MaskedScroll';
 import { useAppText } from '@/i18n/state/client';
 import { Album } from '@/album';
@@ -61,6 +61,10 @@ import { useEditTitlesState } from '@/admin/edit-titles/EditTitlesState';
 import { DATA_KEY_PHOTO_LARGE } from '@/admin/edit-titles/EditTitlesProvider';
 import FieldsetWithStatus from '@/components/FieldsetWithStatus';
 import PlaceEntity from '@/place/PlaceEntity';
+import PhotoOmRecipe from '@/platforms/om-system/PhotoOmRecipe';
+import OmRecipeOverlay from '@/platforms/om-system/OmRecipeOverlay';
+import useMediaQuery from '@/utility/useMediaQuery';
+import { getFujifilmRecipe, getOmRecipe } from '@/recipe/serialization';
 import PhotoColorBar from './color/PhotoColorBar';
 
 export default function PhotoLarge({
@@ -109,6 +113,11 @@ export default function PhotoLarge({
   query?: string
   recent?: boolean
   year?: string
+  camera?: Camera
+  lens?: Lens
+  recipe?: string
+  film?: string
+  focal?: number
   revalidatePhoto?: RevalidatePhoto
   showTitle?: boolean
   showTitleAsH1?: boolean
@@ -185,6 +194,12 @@ export default function PhotoLarge({
     ref: refRecipe,
     refTriggers,
   });
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const omRecipe = getOmRecipe(photo.recipeData);
+  const fujifilmRecipe = getFujifilmRecipe(photo.recipeData);
+  const showInlineRecipeOverlay =
+    (isShowingRecipeOverlay || shouldDebugRecipeOverlays) &&
+    (!omRecipe || isDesktop);
 
   const tags = sortTagsArray(photo.tags, primaryTag);
 
@@ -283,22 +298,29 @@ export default function PhotoLarge({
         'flex items-center justify-center',
         // Allow clicks to pass through to zoom controls
         // when not showing recipe overlay
-        !(isShowingRecipeOverlay || shouldDebugRecipeOverlays) &&
+        !showInlineRecipeOverlay &&
           'pointer-events-none',
       )}>
         <AnimatePresence>
-          {(isShowingRecipeOverlay || shouldDebugRecipeOverlays) &&
-            photo.recipeData &&
+          {showInlineRecipeOverlay &&
+            fujifilmRecipe &&
             photo.film &&
               <PhotoRecipeOverlay
                 ref={refRecipe}
-                title={photo.recipeTitle}
-                data={photo.recipeData}
+                title={recipeTitle}
+                data={fujifilmRecipe}
                 film={photo.film}
                 iso={photo.isoFormatted}
                 exposure={photo.exposureCompensationFormatted}
                 onClose={hideRecipeOverlay}
               />}
+          {showInlineRecipeOverlay &&
+            omRecipe && recipeTitle && <OmRecipeOverlay
+            ref={refRecipe}
+            recipe={omRecipe}
+            recipeKey={recipeTitle}
+            onClose={hideRecipeOverlay}
+          />}
         </AnimatePresence>
       </div>
     </div>;
@@ -429,7 +451,7 @@ export default function PhotoLarge({
                               includeFocalLength={false}
                             />}
                         </div>}
-                      {showRecipeContent && recipeTitle &&
+                      {showRecipeContent && !omRecipe && recipeTitle &&
                         <PhotoRecipe
                           ref={refPhotoRecipe}
                           recipe={recipeTitle}
@@ -438,6 +460,16 @@ export default function PhotoLarge({
                           toggleRecipeOverlay={toggleRecipeOverlay}
                           isShowingRecipeOverlay={isShowingRecipeOverlay}
                         />}
+                      {showRecipeContent && omRecipe &&
+                        recipeTitle && <PhotoOmRecipe
+                        ref={refPhotoRecipe}
+                        recipe={omRecipe}
+                        recipeKey={recipeTitle}
+                        contrast="medium"
+                        prefetch={prefetchRelatedLinks}
+                        toggleRecipeOverlay={toggleRecipeOverlay}
+                        isShowingRecipeOverlay={isShowingRecipeOverlay}
+                      />}
                       {showTagsContent &&
                         <PhotoTags
                           tags={tags}
@@ -504,7 +536,7 @@ export default function PhotoLarge({
                         film={photo.film}
                         make={photo.make}
                         prefetch={prefetchRelatedLinks}
-                        {...photo.recipeData && !photo.recipeTitle && {
+                        {...fujifilmRecipe && !recipeTitle && {
                           toggleRecipeOverlay,
                           isShowingRecipeOverlay,
                         }}
@@ -592,7 +624,7 @@ export default function PhotoLarge({
                           : undefined}
                         prefetch={prefetchRelatedLinks}
                       />}
-                  {ALLOW_PUBLIC_DOWNLOADS && 
+                  {ALLOW_PUBLIC_DOWNLOADS &&
                       <DownloadButton 
                         className="translate-y-[0.5px] 3xl:translate-y-0"
                         photo={photo} 

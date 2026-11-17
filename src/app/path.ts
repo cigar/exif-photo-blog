@@ -48,6 +48,7 @@ export const doesPathOfferSort = (pathname: string) =>
 export const PATH_SITEMAP               = '/sitemap.xml';
 export const PATH_RSS_XML               = '/rss.xml';
 export const PATH_FEED_JSON             = '/feed.json';
+export const PATH_API_COLLECTIONS       = '/api/collections';
 
 // Path prefixes
 export const PREFIX_PHOTO               = '/p';

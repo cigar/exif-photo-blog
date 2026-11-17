@@ -41,8 +41,9 @@ export const vercelBlobUploadFromClient = async (
 export const vercelBlobPut = (
   file: Buffer,
   fileName: string,
+  allowOverwrite = false,
 ): Promise<string> =>
-  put(fileName, file, { access: 'public' })
+  put(fileName, file, { access: 'public', allowOverwrite })
     .then(({ url }) => url);
 
 export const vercelBlobCopy = (

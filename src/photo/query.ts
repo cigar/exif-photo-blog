@@ -817,6 +817,11 @@ export const getPhoto = async (
       .then(photos => photos.length > 0 ? photos[0] : undefined);
   }, 'getPhoto');
 
+export const touchPhotoUpdatedAt = (photoId: string) =>
+  safelyQuery(() => sql`
+    UPDATE photos SET updated_at=CURRENT_TIMESTAMP WHERE id=${photoId}
+  `, 'touchPhotoUpdatedAt');
+
 // Update queries
 
 const outdatedWhereClauses = [

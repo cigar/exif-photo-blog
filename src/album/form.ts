@@ -14,9 +14,7 @@ export const ALBUM_FORM_META: {
   { key: 'slug', type: 'text', required: true, readOnly: true },
   { key: 'subhead', type: 'text' },
   { key: 'description', type: 'textarea' },
-  { key: 'parentAlbumId', label: 'Parent collection ID (blank for top level)', type: 'text' },
   { key: 'sortOrder', label: 'Sort order', type: 'text' },
-  { key: 'coverPhotoId', label: 'Cover photo ID (optional)', type: 'text' },
   { key: 'durationDays', label: 'Duration in days', type: 'text' },
   { key: 'distanceKm', label: 'Distance in km', type: 'text' },
 ];

@@ -36,11 +36,14 @@ import {
   pathForPhoto,
   PREFIX_YEAR,
   PREFIX_ALBUM,
+  PATH_FEED_JSON,
+  PATH_API_COLLECTIONS,
 } from '@/app/path';
 import { createLensKey } from '@/lens';
 import {
   KEY_PHOTOS,
   KEY_PHOTO,
+  KEY_ALBUMS,
   KEY_CAMERAS,
   KEY_LENSES,
   KEY_TAGS,
@@ -108,6 +111,8 @@ const getPhotosCacheKeys = (options: PhotoQueryOptions = {}) => {
 export const revalidatePhoto = (photoId: string) => {
   // Tags
   revalidateTag(photoId, 'max');
+  revalidateTag(KEY_PHOTOS, { expire: 0 });
+  revalidateTag(KEY_ALBUMS, { expire: 0 });
   revalidateYearsKey();
   revalidateCamerasKey();
   revalidateLensesKey();
@@ -118,6 +123,8 @@ export const revalidatePhoto = (photoId: string) => {
   revalidateFocalLengthsKey();
   // Paths
   revalidatePath(pathForPhoto({ photo: photoId }), 'layout');
+  revalidatePath(PATH_FEED_JSON);
+  revalidatePath(PATH_API_COLLECTIONS);
   revalidatePath(PATH_ROOT, 'layout');
   revalidatePath(PATH_GRID, 'layout');
   revalidatePath(PATH_FULL, 'layout');

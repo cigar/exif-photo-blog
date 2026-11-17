@@ -8,7 +8,11 @@ import {
   pathForAlbum,
 } from '@/app/path';
 import PhotoLightbox from '@/photo/PhotoLightbox';
-import { getAlbumFromSlug } from '@/album/query';
+import {
+  getAlbumFromSlug,
+  getAlbumsWithMeta,
+  getPublicAlbumSummary,
+} from '@/album/query';
 import AdminAlbumBadge from '@/admin/AdminAlbumBadge';
 import AdminAlbumForm from '@/admin/AdminAlbumForm';
 import { HAS_LOCATION_SERVICES } from '@/app/config';
@@ -36,9 +40,13 @@ export default async function AlbumPageEdit({
   const [
     { count },
     photos,
+    albumSummary,
+    allAlbums,
   ] = await Promise.all([
     getPhotosMetaCached({ album }),
     getPhotosCached({ album, limit: MAX_PHOTO_TO_SHOW }),
+    getPublicAlbumSummary(album.id),
+    getAlbumsWithMeta().catch(() => []),
   ]);
 
   return (
@@ -53,6 +61,13 @@ export default async function AlbumPageEdit({
         redirectPath: typeof redirectPath === 'string'
           ? redirectPath
           : undefined,
+        publicPhotoCount: albumSummary.photoCount,
+        publicAlbumCount: albumSummary.nonEmptyAlbumCount,
+        topLevelAlbums: allAlbums
+          .map(({ album: available }) => available)
+          .filter(available => !available.parentAlbumId && available.id !== album.id),
+        canChangeParent: !allAlbums.some(({ album: child }) =>
+          child.parentAlbumId === album.id),
       }}>
         {photos.length > 0 &&
           <PhotoLightbox

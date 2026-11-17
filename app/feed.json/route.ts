@@ -6,8 +6,9 @@ import { FEED_PHOTO_MAX_LIMIT, FEED_PHOTO_REQUEST_LIMIT } from '@/feed/programma
 import { Buffer } from 'node:buffer';
 import { getAlbumFromSlug } from '@/album/query';
 
-// Cache for 24 hours
-export const revalidate = 86_400;
+// Keep aligned with the public Cache-Control header. Mutations also invalidate
+// this route immediately via the shared cache invalidation helpers.
+export const revalidate = 300;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -19,7 +20,11 @@ export async function OPTIONS() {
   return new Response(null, { headers: CORS_HEADERS });
 }
 
-const decodeCursor = (cursor?: string): { createdAt: string, id: string } | null => {
+const decodeCursor = (cursor?: string): {
+  createdAt: string
+  id: string
+  offset?: number
+} | null => {
   if (!cursor) return null;
   try {
     const json = Buffer.from(cursor, 'base64').toString('utf8');
@@ -29,8 +34,8 @@ const decodeCursor = (cursor?: string): { createdAt: string, id: string } | null
   }
 };
 
-const encodeCursor = (createdAt: string, id: string) =>
-  Buffer.from(JSON.stringify({ createdAt, id })).toString('base64');
+const encodeCursor = (createdAt: string, id: string, offset: number) =>
+  Buffer.from(JSON.stringify({ createdAt, id, offset })).toString('base64');
 
 export async function GET(req: Request) {
   if (!SITE_FEEDS_ENABLED) {
@@ -72,13 +77,18 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Malformed cursor' }, { status: 400, headers: CORS_HEADERS });
   }
   if (decodedCursor) {
+    const decodedOffset = Number((decodedCursor as any).offset);
     if (album) {
-      const decodedOffset = Number((decodedCursor as any).offset);
       if (!Number.isInteger(decodedOffset) || decodedOffset < 0) {
         return Response.json({ error: 'Malformed cursor' }, { status: 400, headers: CORS_HEADERS });
       }
       baseOptions.offset = decodedOffset;
     } else {
+      if (!decodedCursor.createdAt || !decodedCursor.id ||
+        (decodedCursor.offset !== undefined &&
+          (!Number.isInteger(decodedOffset) || decodedOffset < 0))) {
+        return Response.json({ error: 'Malformed cursor' }, { status: 400, headers: CORS_HEADERS });
+      }
       baseOptions.createdBefore = new Date(decodedCursor.createdAt);
       baseOptions.idBefore = decodedCursor.id;
     }
@@ -98,7 +108,10 @@ export async function GET(req: Request) {
 
   // Build nextCursor only if we have at least `limit` items returned (indicating possible next page)
   let nextCursor: string | undefined;
-  const hasMore = photos.length === limit && photos.length > 0;
+  const currentOffset = decodedCursor
+    ? Number((decodedCursor as any).offset ?? limit)
+    : (baseOptions.offset ?? 0);
+  const hasMore = photos.length > 0 && currentOffset + photos.length < total;
 
   if (hasMore) {
     const last = photos[photos.length - 1];
@@ -106,7 +119,7 @@ export async function GET(req: Request) {
     const createdAtStr = (last.createdAt instanceof Date) ? last.createdAt.toISOString() : String(last.createdAt);
     nextCursor = album
       ? Buffer.from(JSON.stringify({ offset: (baseOptions.offset ?? 0) + photos.length })).toString('base64')
-      : encodeCursor(createdAtStr, last.id);
+      : encodeCursor(createdAtStr, last.id, currentOffset + photos.length);
   }
 
   // Append metadata

@@ -7,8 +7,10 @@ import AdminPage from '@/admin/AdminPage';
 
 export default function AdminAlbumCreateClient({
   hasLocationServices,
+  topLevelAlbums = [],
 }: {
   hasLocationServices?: boolean
+  topLevelAlbums?: import('@/album').Album[]
 }) {
   const [title, setTitle] = useState('');
 
@@ -22,6 +24,7 @@ export default function AdminAlbumCreateClient({
       <AdminAlbumForm
         hasLocationServices={hasLocationServices}
         mode="create"
+        topLevelAlbums={topLevelAlbums}
         onTitleChange={setTitle}
       />
     </AdminPage>

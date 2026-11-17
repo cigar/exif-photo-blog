@@ -92,6 +92,23 @@ export const albumHasChildren = (id: string) =>
   `.then(({ rows }) => Boolean(rows[0]?.has_children))
   , 'albumHasChildren');
 
+export const getPublicAlbumSummary = (id: string) =>
+  safelyQuery(() => sql`
+    SELECT
+      COUNT(DISTINCT p.id)::int AS photo_count,
+      COUNT(DISTINCT ap.album_id) FILTER (WHERE p.id IS NOT NULL)::int AS non_empty_album_count
+    FROM albums a
+    LEFT JOIN albums child ON child.parent_album_id=a.id
+    LEFT JOIN album_photo ap ON ap.album_id=COALESCE(child.id, a.id)
+    LEFT JOIN photos p ON p.id=ap.photo_id
+      AND p.hidden IS NOT TRUE AND p.exclude_from_feeds IS NOT TRUE
+    WHERE a.id=${id}
+  `.then(({ rows }) => ({
+    photoCount: Number(rows[0]?.photo_count ?? 0),
+    nonEmptyAlbumCount: Number(rows[0]?.non_empty_album_count ?? 0),
+  }))
+  , 'getPublicAlbumSummary');
+
 export const ensureAlbumCollectionSchema = () =>
   safelyQuery(() => sql`SELECT parent_album_id FROM albums LIMIT 0`, 'ensureAlbumCollectionSchema');
 

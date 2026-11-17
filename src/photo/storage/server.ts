@@ -18,6 +18,7 @@ import {
 export const storeOptimizedPhotosForUrl = async (
   url: string,
   _fileBytes?: ArrayBuffer,
+  allowOverwrite = false,
 ) => {
   const fileBytes = _fileBytes
     ? _fileBytes
@@ -25,7 +26,11 @@ export const storeOptimizedPhotosForUrl = async (
   const { fileNameBase } = getFileNamePartsFromStorageUrl(url);
   const optimizedPhotoFileMeta = getOptimizedPhotoFileMeta(fileNameBase);
   for (const { fileName, size, quality } of optimizedPhotoFileMeta) {
-    await putFile(await resizeImageToBytes(fileBytes, size, quality), fileName);
+    await putFile(
+      await resizeImageToBytes(fileBytes, size, quality),
+      fileName,
+      allowOverwrite,
+    );
   }
   return url;
 };

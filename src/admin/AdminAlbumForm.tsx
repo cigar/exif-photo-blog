@@ -15,6 +15,7 @@ import PlaceInput from '@/place/PlaceInput';
 import { convertPlaceToAutocomplete, Place } from '@/place';
 import deepEqual from 'fast-deep-equal/es6/react';
 import { useRouter } from 'next/navigation';
+import AlbumCoverPhotoSelect from '@/album/AlbumCoverPhotoSelect';
 
 export default function AdminAlbumForm({
   album = {
@@ -27,6 +28,10 @@ export default function AdminAlbumForm({
   mode = 'edit',
   onTitleChange,
   redirectPath,
+  topLevelAlbums = [],
+  publicPhotoCount = 0,
+  publicAlbumCount = 0,
+  canChangeParent = true,
 }: {
   album?: Album
   hasLocationServices?: boolean
@@ -34,6 +39,10 @@ export default function AdminAlbumForm({
   mode?: 'edit' | 'create'
   onTitleChange?: (title: string) => void
   redirectPath?: string
+  topLevelAlbums?: Album[]
+  publicPhotoCount?: number
+  publicAlbumCount?: number
+  canChangeParent?: boolean
 }) {
   const { invalidateSwr } = useAppState();
   const router = useRouter();
@@ -98,6 +107,52 @@ export default function AdminAlbumForm({
             error={key === 'title' ? formError : undefined}
             className={clsx(key === 'description' && '[&_textarea]:h-36')}
           />))}
+      <div className="space-y-2">
+        <label htmlFor="parentAlbumId" className="block text-sm font-medium">
+          Parent collection
+        </label>
+        <select
+          id="parentAlbumId"
+          name="parentAlbumId"
+          className="w-full"
+          value={albumForm.parentAlbumId ?? ''}
+          disabled={!canChangeParent}
+          onChange={event => {
+            setFormError('');
+            setAlbumForm(form => ({
+              ...form,
+              parentAlbumId: event.target.value || null,
+            }));
+          }}
+        >
+          <option value="">Top level / standalone album</option>
+          {topLevelAlbums.map(option => (
+            <option key={option.id} value={option.id}>{option.title}</option>
+          ))}
+        </select>
+      </div>
+      {!canChangeParent && <p className="text-sm text-dim">
+        This collection already has child albums, so it must stay at the top level.
+      </p>}
+      {albumForm.parentAlbumId && publicPhotoCount === 0 &&
+        <p className="text-sm text-amber-700">
+          This child album has no public photos and will not appear in the public Collections API.
+        </p>}
+      {!albumForm.parentAlbumId && publicAlbumCount === 0 &&
+        <p className="text-sm text-amber-700">
+          This top-level album has no public photos or non-empty child albums and will not appear in the public Collections API.
+        </p>}
+      <AlbumCoverPhotoSelect
+        albumId={albumForm.id}
+        value={albumForm.coverPhotoId}
+        onChange={value => {
+          setFormError('');
+          setAlbumForm(form => ({
+            ...form,
+            coverPhotoId: value,
+          }));
+        }}
+      />
       {hasLocationServices &&
         <PlaceInput {...{
           initialPlace,

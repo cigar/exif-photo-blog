@@ -19,6 +19,7 @@ import { StorageListResponse } from '@/platforms/storage';
 import { Albums } from '@/album';
 import { Cameras } from '@/camera';
 import { Lenses } from '@/lens';
+import RegeneratePhotoVariantsButton from './RegeneratePhotoVariantsButton';
 
 export default function PhotoEditPageClient({
   photo,
@@ -87,6 +88,7 @@ export default function PhotoEditPageClient({
             photoUrl={photo.url}
             onSync={setUpdatedExifData}
           />
+          <RegeneratePhotoVariantsButton photoId={photo.id} />
         </div>}
       isLoading={pending}
     >

@@ -8,6 +8,7 @@ import {
   renamePhotoTagGlobally,
   setPhotoVisibilityForIds,
   getPhoto,
+  touchPhotoUpdatedAt,
   getPhotos,
   addTagsToPhotos,
   getUniqueTags,
@@ -810,6 +811,16 @@ export const getPhotoAction = async (photoId: string) =>
   runAuthenticatedAdminServerAction(async () =>
     getPhoto(photoId, true),
   );
+
+export const regeneratePhotoVariantsAction = async (photoId: string) =>
+  runAuthenticatedAdminServerAction(async () => {
+    const photo = await getPhoto(photoId, true);
+    if (!photo) return { error: 'Photo not found' };
+    await storeOptimizedPhotosForUrl(photo.url, undefined, true);
+    await touchPhotoUpdatedAt(photoId);
+    revalidatePhoto(photoId);
+    return { success: true };
+  });
 
 // Public/Private actions
 

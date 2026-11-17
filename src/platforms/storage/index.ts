@@ -196,10 +196,11 @@ export const uploadFileFromClient = async (
 export const putFile = (
   file: Buffer,
   fileName: string,
+  allowOverwrite = false,
 ) => {
   switch (CURRENT_STORAGE) {
     case 'vercel-blob':
-      return vercelBlobPut(file, fileName);
+      return vercelBlobPut(file, fileName, allowOverwrite);
     case 'cloudflare-r2':
       return cloudflareR2Put(file, fileName);
     case 'aws-s3':

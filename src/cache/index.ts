@@ -1,4 +1,9 @@
-import { PATHS_ADMIN, PATHS_TO_CACHE } from '@/app/path';
+import {
+  PATH_API_COLLECTIONS,
+  PATH_FEED_JSON,
+  PATHS_ADMIN,
+  PATHS_TO_CACHE,
+} from '@/app/path';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
 // Page keys
@@ -68,5 +73,9 @@ export const revalidateAdminPaths = () => {
 
 export const revalidateAllKeysAndPaths = () => {
   revalidateAllKeys();
+  revalidateTag(KEY_PHOTOS, { expire: 0 });
+  revalidateTag(KEY_ALBUMS, { expire: 0 });
   PATHS_TO_CACHE.forEach(path => revalidatePath(path, 'layout'));
+  revalidatePath(PATH_FEED_JSON);
+  revalidatePath(PATH_API_COLLECTIONS);
 };

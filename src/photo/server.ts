@@ -325,6 +325,7 @@ export const resizeImageToBytes = async (
   quality = IMAGE_QUALITY_DEFAULT,
 ) => 
   sharp(image)
+    .rotate()
     .resize(width)
     .toFormat('jpeg', { quality })
     .toBuffer();

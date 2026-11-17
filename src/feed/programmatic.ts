@@ -27,13 +27,25 @@ export interface FeedMedia {
 export const generateFeedMedia = (
   photo: Photo,
   size: NextImageSize,
-): FeedMedia => ({
+): FeedMedia => {
+  const url = getOptimizedPhotoUrl({
+    imageUrl: photo.url,
+    size,
+    useNextImage: false,
+  });
+  const cacheBustedUrl = new URL(url);
+  cacheBustedUrl.searchParams.set(
+    'v',
+    String(new Date(photo.updatedAt).getTime()),
+  );
+  return {
   // Feed consumers need stable, already-generated files. Sending these URLs
   // directly avoids a new Vercel Image Optimization transformation per size.
-  url: getOptimizedPhotoUrl({ imageUrl: photo.url, size, useNextImage: false }),
+    url: cacheBustedUrl.toString(),
   width: size,
   height: Math.round(size / photo.aspectRatio),
-});
+  };
+};
 
 export const getCoreFeedFields = (photo: Photo) => ({
   id: photo.id,

@@ -64,7 +64,9 @@ export default function AlbumCoverPhotoSelect({
         ))}
       </select>
       <div className="flex items-center gap-3 text-xs text-dim">
-        <span>{total} public photos available</span>
+        <span>{hasLoaded
+          ? `${total} public photos available`
+          : 'Load public photos to choose a cover'}</span>
         {!hasLoaded && <button
           type="button"
           className="link"

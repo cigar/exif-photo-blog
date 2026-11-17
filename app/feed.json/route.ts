@@ -4,6 +4,7 @@ import { formatFeedJson } from '@/feed/json';
 import { PROGRAMMATIC_QUERY_OPTIONS } from '@/feed';
 import { FEED_PHOTO_MAX_LIMIT, FEED_PHOTO_REQUEST_LIMIT } from '@/feed/programmatic';
 import { Buffer } from 'node:buffer';
+import { getAlbumFromSlug } from '@/album/query';
 
 // Cache for 24 hours
 export const revalidate = 86_400;
@@ -41,6 +42,7 @@ export async function GET(req: Request) {
   const offsetParam = url.searchParams.get('offset');
   const cursorParam = url.searchParams.get('cursor');
   const tagParam = url.searchParams.get('tag');
+  const albumParam = url.searchParams.get('album');
 
   const requestedLimit = limitParam ? parseInt(limitParam, 10) : undefined;
   const requestedOffset = offsetParam ? Math.max(0, parseInt(offsetParam, 10)) : undefined;
@@ -53,17 +55,33 @@ export async function GET(req: Request) {
   );
 
   // Prepare options for getPhotosCached
+  const album = albumParam ? await getAlbumFromSlug(albumParam) : undefined;
+  if (albumParam && !album) {
+    return Response.json({ meta: { total: 0, hasMore: false, nextCursor: null }, photos: [] }, { headers: CORS_HEADERS });
+  }
   const baseOptions = {
     ...PROGRAMMATIC_QUERY_OPTIONS,
     limit,
     ...(tagParam && { tag: tagParam }),
+    ...(album && { album, albumSortOrder: true }),
   } as any;
 
   // Priority 1: cursor (keyset)
   const decodedCursor = decodeCursor(cursorParam ?? undefined);
+  if (cursorParam && !decodedCursor) {
+    return Response.json({ error: 'Malformed cursor' }, { status: 400, headers: CORS_HEADERS });
+  }
   if (decodedCursor) {
-    baseOptions.createdBefore = new Date(decodedCursor.createdAt);
-    baseOptions.idBefore = decodedCursor.id;
+    if (album) {
+      const decodedOffset = Number((decodedCursor as any).offset);
+      if (!Number.isInteger(decodedOffset) || decodedOffset < 0) {
+        return Response.json({ error: 'Malformed cursor' }, { status: 400, headers: CORS_HEADERS });
+      }
+      baseOptions.offset = decodedOffset;
+    } else {
+      baseOptions.createdBefore = new Date(decodedCursor.createdAt);
+      baseOptions.idBefore = decodedCursor.id;
+    }
   } else if (requestedOffset !== undefined) {
     // Priority 2: offset-based
     baseOptions.offset = requestedOffset;
@@ -72,7 +90,7 @@ export async function GET(req: Request) {
   // Fetch photos and total count in parallel
   const [photos, meta] = await Promise.all([
     getPhotosCached(baseOptions).catch(() => []),
-    getPhotosMetaCached({ ...(tagParam && { tag: tagParam }) }).catch(() => ({ count: 0 })),
+    getPhotosMetaCached({ ...(tagParam && { tag: tagParam }), ...(album && { album }) }).catch(() => ({ count: 0 })),
   ]);
 
   const total = meta.count;
@@ -86,7 +104,9 @@ export async function GET(req: Request) {
     const last = photos[photos.length - 1];
     // createdAt here is a Date object in Photo; ensure ISO string
     const createdAtStr = (last.createdAt instanceof Date) ? last.createdAt.toISOString() : String(last.createdAt);
-    nextCursor = encodeCursor(createdAtStr, last.id);
+    nextCursor = album
+      ? Buffer.from(JSON.stringify({ offset: (baseOptions.offset ?? 0) + photos.length })).toString('base64')
+      : encodeCursor(createdAtStr, last.id);
   }
 
   // Append metadata

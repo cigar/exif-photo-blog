@@ -44,6 +44,7 @@ export type PhotoQueryOptions = {
   camera?: Partial<Camera>
   lens?: Partial<Lens>
   album?: Album
+  albumSortOrder?: boolean
   photoIds?: string[]
 };
 
@@ -203,6 +204,10 @@ export const getOrderByFromOptions = (options: PhotoQueryOptions) => {
     sortWithPriority,
     limit = PHOTO_DEFAULT_LIMIT,
   } = options;
+
+  if (options.albumSortOrder) {
+    return 'ORDER BY ap.sort_order ASC, p.created_at DESC, p.id ASC';
+  }
 
   switch (sortBy) {
     case 'takenAt':

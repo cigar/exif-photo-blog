@@ -14,6 +14,11 @@ export const ALBUM_FORM_META: {
   { key: 'slug', type: 'text', required: true, readOnly: true },
   { key: 'subhead', type: 'text' },
   { key: 'description', type: 'textarea' },
+  { key: 'parentAlbumId', label: 'Parent collection ID (blank for top level)', type: 'text' },
+  { key: 'sortOrder', label: 'Sort order', type: 'text' },
+  { key: 'coverPhotoId', label: 'Cover photo ID (optional)', type: 'text' },
+  { key: 'durationDays', label: 'Duration in days', type: 'text' },
+  { key: 'distanceKm', label: 'Distance in km', type: 'text' },
 ];
 
 export const convertFormDataToAlbum = (formData: FormData): Album => {
@@ -24,6 +29,11 @@ export const convertFormDataToAlbum = (formData: FormData): Album => {
     slug: formData.get('slug') as string,
     subhead: formData.get('subhead') as string,
     description: formData.get('description') as string,
+    parentAlbumId: (formData.get('parentAlbumId') as string) || null,
+    sortOrder: Number(formData.get('sortOrder') || 0),
+    coverPhotoId: (formData.get('coverPhotoId') as string) || null,
+    durationDays: formData.get('durationDays') ? Number(formData.get('durationDays')) : null,
+    distanceKm: formData.get('distanceKm') ? Number(formData.get('distanceKm')) : null,
     ...locationString && { location: JSON.parse(locationString) },
   };
 };

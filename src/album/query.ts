@@ -12,6 +12,11 @@ export const createAlbumsTable = () =>
       subhead TEXT,
       description TEXT,
       location JSONB,
+      parent_album_id uuid REFERENCES albums(id) ON DELETE SET NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      cover_photo_id VARCHAR(8) REFERENCES photos(id) ON DELETE SET NULL,
+      duration_days INTEGER,
+      distance_km NUMERIC,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
@@ -34,7 +39,7 @@ export const insertAlbum = (album: Omit<Album, 'id'>) =>
       slug,
       subhead,
       description,
-      location
+      location, parent_album_id, sort_order, cover_photo_id, duration_days, distance_km
     ) VALUES (
       ${album.title},
       ${album.slug},
@@ -42,7 +47,9 @@ export const insertAlbum = (album: Omit<Album, 'id'>) =>
       ${album.description},
       ${album.location
         ? JSON.stringify(album.location)
-        : null}
+        : null},
+      ${album.parentAlbumId ?? null}, ${album.sortOrder ?? 0},
+      ${album.coverPhotoId ?? null}, ${album.durationDays ?? null}, ${album.distanceKm ?? null}
     )
     RETURNING id
   `.then(({ rows }) => rows[0]?.id as string)
@@ -58,6 +65,11 @@ export const updateAlbum = (album: Album) =>
       location=${album.location
         ? JSON.stringify(album.location)
         : null},
+      parent_album_id=${album.parentAlbumId ?? null},
+      sort_order=${album.sortOrder ?? 0},
+      cover_photo_id=${album.coverPhotoId ?? null},
+      duration_days=${album.durationDays ?? null},
+      distance_km=${album.distanceKm ?? null},
       updated_at=${(new Date()).toISOString()}
     WHERE id=${album.id}
   `, 'updateAlbum');
@@ -67,6 +79,21 @@ export const getAlbumFromSlug = (slug: string) =>
     SELECT * FROM albums WHERE slug=${slug}
   `.then(({ rows }) => rows[0] ? parseAlbumFromDb(rows[0]) : undefined)
   , 'getAlbumFromSlug');
+
+export const getAlbumFromId = (id: string) =>
+  safelyQuery(() => sql<Album>`
+    SELECT * FROM albums WHERE id=${id}
+  `.then(({ rows }) => rows[0] ? parseAlbumFromDb(rows[0]) : undefined)
+  , 'getAlbumFromId');
+
+export const albumHasChildren = (id: string) =>
+  safelyQuery(() => sql`
+    SELECT EXISTS(SELECT 1 FROM albums WHERE parent_album_id=${id}) AS has_children
+  `.then(({ rows }) => Boolean(rows[0]?.has_children))
+  , 'albumHasChildren');
+
+export const ensureAlbumCollectionSchema = () =>
+  safelyQuery(() => sql`SELECT parent_album_id FROM albums LIMIT 0`, 'ensureAlbumCollectionSchema');
 
 export const deleteAlbum = (id: string) =>
   safelyQuery(() => sql`

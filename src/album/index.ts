@@ -17,6 +17,11 @@ export interface Album {
   subhead?: string
   description?: string
   location?: Place
+  parentAlbumId?: string | null
+  sortOrder?: number
+  coverPhotoId?: string | null
+  durationDays?: number | null
+  distanceKm?: number | null
 }
 
 type AlbumWithMeta = {

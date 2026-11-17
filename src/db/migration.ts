@@ -126,6 +126,18 @@ export const MIGRATIONS: Migration[] = [{
     ALTER TABLE photos
     ADD COLUMN IF NOT EXISTS location JSONB
   `,
+}, {
+  label: '12: Album Collections',
+  table: 'albums',
+  fields: ['parent_album_id', 'sort_order', 'cover_photo_id', 'duration_days', 'distance_km'],
+  run: () => sql`
+    ALTER TABLE albums
+    ADD COLUMN IF NOT EXISTS parent_album_id UUID REFERENCES albums(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS cover_photo_id VARCHAR(8) REFERENCES photos(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS duration_days INTEGER,
+    ADD COLUMN IF NOT EXISTS distance_km NUMERIC
+  `,
 }];
 
 export const migrateAboutTableToLibrary = () =>

@@ -15,7 +15,8 @@ export const FEED_PHOTO_MAX_LIMIT = parseInt(
 
 export const FEED_PHOTO_WIDTH_SMALL = 200;
 export const FEED_PHOTO_WIDTH_MEDIUM = 640;
-export const FEED_PHOTO_WIDTH_LARGE = 1200;
+// Match the persisted `-lg` variant created when each photo is uploaded.
+export const FEED_PHOTO_WIDTH_LARGE = 1080;
 
 export interface FeedMedia {
   url: string
@@ -27,7 +28,9 @@ export const generateFeedMedia = (
   photo: Photo,
   size: NextImageSize,
 ): FeedMedia => ({
-  url: getOptimizedPhotoUrl({ imageUrl: photo.url, size }),
+  // Feed consumers need stable, already-generated files. Sending these URLs
+  // directly avoids a new Vercel Image Optimization transformation per size.
+  url: getOptimizedPhotoUrl({ imageUrl: photo.url, size, useNextImage: false }),
   width: size,
   height: Math.round(size / photo.aspectRatio),
 });

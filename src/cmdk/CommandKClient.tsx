@@ -70,6 +70,7 @@ import {
 } from '@/tag';
 import { formatCount, formatCountDescriptive } from '@/utility/string';
 import CommandKItem from './CommandKItem';
+import { COMMAND_K_MINIMUM_QUERY_LENGTH, filterCommandK } from '.';
 import {
   CATEGORY_VISIBILITY,
   COLOR_SORT_ENABLED,
@@ -111,8 +112,7 @@ import { useSelectPhotosState } from '@/admin/select/SelectPhotosState';
 import { useEditTitlesState } from '@/admin/edit-titles/EditTitlesState';
 import IconAlbum from '@/components/icons/IconAlbum';
 import usePhotoQuery from '@/photo/usePhotoQuery';
-import { clearCacheAction } from '@/photo/actions';
-import { toastSuccess } from '@/toast';
+import useClearCache from '@/admin/useClearCache';
 
 const DIALOG_TITLE = 'Global Command-K Menu';
 const DIALOG_DESCRIPTION = 'For searching photos, views, and settings';
@@ -120,8 +120,6 @@ const DIALOG_DESCRIPTION = 'For searching photos, views, and settings';
 const LISTENER_KEYDOWN = 'keydown';
 
 const MAX_HEIGHT = '20rem';
-
-const MINIMUM_QUERY_LENGTH = 2;
 
 type CommandKItem = {
   label: ReactNode
@@ -180,7 +178,6 @@ export default function CommandKClient({
     clearAuthStateAndRedirectIfNecessary,
     isCommandKOpen: isOpen,
     nextCommandKQuery,
-    invalidateSwr,
     photosCountTotal,
     photosCountHidden = 0,
     uploadsCount,
@@ -209,6 +206,8 @@ export default function CommandKClient({
   } = useAppState();
 
   const { startUpload } = useUploadState();
+
+  const clearCache = useClearCache();
 
   const {
     isSelectingPhotos,
@@ -287,7 +286,7 @@ export default function CommandKClient({
   } = usePhotoQuery({
     query,
     isEnabled: !isPending,
-    minimumQueryLength: MINIMUM_QUERY_LENGTH,
+    minimumQueryLength: COMMAND_K_MINIMUM_QUERY_LENGTH,
   });
 
   const { setTheme } = useTheme();
@@ -318,7 +317,7 @@ export default function CommandKClient({
     return () => document.removeEventListener(LISTENER_KEYDOWN, down);
   }, [setIsOpen]);
 
-  const queriedSections = useMemo<CommandKSection[]>(() => {
+  const sectionQuery = useMemo<CommandKSection[]>(() => {
     if (isOpenRef.current && photos.length > 0) {
       return [{
         heading: 'Photos',
@@ -389,7 +388,7 @@ export default function CommandKClient({
       : tagsIncludingPrivate;
   }, [_tags, photosCountHidden, queryFormatted]);
 
-  const categorySections: CommandKSection[] = useMemo(() =>
+  const sectionCategories: CommandKSection[] = useMemo(() =>
     CATEGORY_VISIBILITY
       .map(category => {
         const heading = getCategoryTitle(category, appText);
@@ -472,6 +471,8 @@ export default function CommandKClient({
               annotation: formatCount(count),
               annotationAria: formatCountDescriptive(count),
               path: pathForTag(tag),
+              // "Private" is the label; photos are stored as hidden
+              ...isTagPrivate(tag) && { keywords: ['hidden'] },
             })),
           };
           case 'recipes': return {
@@ -523,7 +524,7 @@ export default function CommandKClient({
     focalLengths,
   ]);
 
-  const clientSections: CommandKSection[] = [{
+  const sectionTheme: CommandKSection[] = [{
     heading: appText.theme.theme,
     accessory: <IoInvertModeSharp
       size={14}
@@ -544,8 +545,10 @@ export default function CommandKClient({
     }],
   }];
 
+  const sectionDebugTools = [] as CommandKSection[];
+
   if (isUserSignedIn && areAdminDebugToolsEnabled) {
-    clientSections.push({
+    sectionDebugTools.push({
       heading: 'Debug Tools',
       accessory: <RiToolsFill size={16} className="translate-x-[-1px]" />,
       items: [
@@ -622,7 +625,7 @@ export default function CommandKClient({
     });
   }
 
-  const sortSection: CommandKSection = {
+  const sectionSort: CommandKSection = {
     heading: appText.sort.sort,
     accessory: <IconSort size={14} className="translate-x-[0.5px]" />,
     items: doesPathOfferSort && !isInEmptyState
@@ -635,9 +638,9 @@ export default function CommandKClient({
       ? appText.nav.full
       : `${appText.nav.full} (${appText.nav.home})`,
     path: PATH_FULL_INFERRED,
-    annotation: renderCheck(GRID_HOMEPAGE_ENABLED
-      ? isPathFull(pathname)
-      : isPathRoot(pathname)),
+    annotation: renderCheck(
+      pathname === PATH_FULL_INFERRED || isPathFull(pathname),
+    ),
   };
 
   const pageGrid: CommandKItem = {
@@ -666,7 +669,7 @@ export default function CommandKClient({
     items: pageItems,
   };
 
-  const adminSection: CommandKSection = {
+  const sectionAdmin: CommandKSection = {
     heading: appText.nav.admin,
     accessory: <FaRegUserCircle
       size={13}
@@ -676,45 +679,45 @@ export default function CommandKClient({
   };
 
   if (isUserSignedIn) {
-    adminSection.items.push({
+    sectionAdmin.items.push({
       label: appText.admin.uploadPhotos,
       annotation: <IconLock narrow />,
       action: startUpload,
     });
     if (uploadsCount) {
-      adminSection.items.push({
+      sectionAdmin.items.push({
         label: `${appText.admin.uploadPlural} (${uploadsCount})`,
         annotation: <IconLock narrow />,
         path: PATH_ADMIN_UPLOADS,
       });
     }
-    adminSection.items.push({
+    sectionAdmin.items.push({
       label: `${appText.admin.managePhotos} (${photosCountTotal})`,
       annotation: <IconLock narrow />,
       path: PATH_ADMIN_PHOTOS,
     });
     if (albumsCount) {
-      adminSection.items.push({
+      sectionAdmin.items.push({
         label: `${appText.admin.manageAlbums} (${albumsCount})`,
         annotation: <IconLock narrow />,
         path: PATH_ADMIN_ALBUMS,
       });
     }
     if (tagsCount) {
-      adminSection.items.push({
+      sectionAdmin.items.push({
         label: `${appText.admin.manageTags} (${tagsCount})`,
         annotation: <IconLock narrow />,
         path: PATH_ADMIN_TAGS,
       });
     }
     if (recipesCount) {
-      adminSection.items.push({
+      sectionAdmin.items.push({
         label: `${appText.admin.manageRecipes} (${recipesCount})`,
         annotation: <IconLock narrow />,
         path: PATH_ADMIN_RECIPES,
       });
     }
-    adminSection.items.push({
+    sectionAdmin.items.push({
       label: isSelectingPhotos
         ? appText.admin.selectPhotosExit
         : appText.admin.selectPhotos,
@@ -744,11 +747,7 @@ export default function CommandKClient({
     }, {
       label: appText.admin.clearCache,
       annotation: <IconLock narrow />,
-      action: () => clearCacheAction()
-        .then(() => {
-          invalidateSwr?.();
-          toastSuccess(appText.admin.clearCacheSuccess);
-        }),
+      action: clearCache,
     }, {
       explicitKey: appText.admin.appInsights,
       label: <span className="flex items-center gap-3">
@@ -764,7 +763,7 @@ export default function CommandKClient({
       path: PATH_ADMIN_CONFIGURATION,
     });
     if (areAdminDebugToolsEnabled) {
-      adminSection.items.push({
+      sectionAdmin.items.push({
         label: 'Baseline Overview',
         annotation: <BiLockAlt />,
         path: PATH_ADMIN_BASELINE,
@@ -775,20 +774,20 @@ export default function CommandKClient({
       });
     }
     if (isAdminAiModelDebugEnabled) {
-      adminSection.items.push({
+      sectionAdmin.items.push({
         label: 'AI Model Comparison',
         annotation: <BiLockAlt />,
         path: PATH_ADMIN_AI_MODELS,
       });
     }
-    adminSection.items.push({
+    sectionAdmin.items.push({
       label: appText.auth.signOut,
       action: () => signOutAction()
         .then(clearAuthStateAndRedirectIfNecessary)
         .then(() => setIsOpen?.(false)),
     });
   } else {
-    adminSection.items.push({
+    sectionAdmin.items.push({
       label: appText.auth.signIn,
       path: PATH_SIGN_IN,
     });
@@ -798,13 +797,7 @@ export default function CommandKClient({
     <Command.Dialog
       open={isOpen}
       onOpenChange={setIsOpen}
-      filter={(value, search, keywords) => {
-        const searchFormatted = search.trim().toLocaleLowerCase();
-        return (
-          value.toLocaleLowerCase().includes(searchFormatted) ||
-          keywords?.some(keyword => keyword.includes(searchFormatted))
-        ) ? 1 : 0 ;
-      }}
+      filter={filterCommandK}
       loop
     >
       <Modal
@@ -902,12 +895,13 @@ export default function CommandKClient({
                 ? appText.cmdk.searching
                 : appText.cmdk.noResults}
             </Command.Empty>
-            {queriedSections
-              .concat(categorySections)
-              .concat(sortSection)
+            {sectionQuery
+              .concat(sectionCategories)
+              .concat(sectionSort)
               .concat(sectionPages)
-              .concat(adminSection)
-              .concat(clientSections)
+              .concat(sectionTheme)
+              .concat(sectionAdmin)
+              .concat(sectionDebugTools)
               .filter(({ items }) => items.length > 0)
               .map(({ heading, accessory, items }) =>
                 <Command.Group

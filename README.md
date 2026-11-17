@@ -4,6 +4,10 @@ https://github.com/sambecker/exif-photo-blog/assets/169298/4253ea54-558a-4358-88
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/sambecker-pro/clone?demo-description=Store%20photos%20with%20original%20camera%20data&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F39rys245Px3FVBGRJNYEON%2Fbf68d5c052bda9e9e5bec21878764bc3%2Fimage.png&demo-title=Photo%20Blog&demo-url=https%3A%2F%2Fphotos.sambecker.com&from=templates&project-name=Photo%20Blog&repository-name=exif-photo-blog&repository-url=https%3A%2F%2Fgithub.com%2Fsambecker%2Fexif-photo-blog&skippable-integrations=1&stores=%5B%7B%22type%22%3A%22postgres%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D&teamCreateStatus=hidden)
 
+> [!NOTE]
+> **New redesign**
+> This template received a significant visual update 23 OCT 2026 featuring a more open grid that harmonizes portrait and landscape photos. This, and the use of a serif font, can be disabled by `NEXT_PUBLIC_DISABLE_EXPRESSIVE_LAYOUT` and `NEXT_PUBLIC_DISABLE_SERIF_FONT` respectively.
+
 🎬&nbsp;&nbsp;Example sites
 -
 - [photos.sambecker.com](https://photos.sambecker.com)
@@ -12,6 +16,7 @@ https://github.com/sambecker/exif-photo-blog/assets/169298/4253ea54-558a-4358-88
 - [photos.sconetto.me](https://photos.sconetto.me)
 - [photos.dteles.dev](https://photos.dteles.dev)
 - [jahidshots.com](https://jahidshots.com)
+- [hugopascual.com](https://hugopascual.com)
 
 _Submit your site as an example by [opening an issue](https://github.com/sambecker/exif-photo-blog/issues/new?template=example_site_submission.md)_
 
@@ -27,6 +32,7 @@ _Submit your site as an example by [opening an issue](https://github.com/sambeck
 - AI-generated text descriptions
 - RSS/JSON feeds
 - Support for Fujifilm recipes and film simulations
+- OM SYSTEM and Olympus color and mono recipes, with galleries for matching settings
 
 <img src="/readme/og-image-share.png" alt="OG Image Preview" width=600 />
 
@@ -158,6 +164,22 @@ To add location meta to entities like photos and albums:
 
 Create Upstash Redis store from storage tab of Vercel dashboard and link to your project (if required, add environment variable prefix `EXIF`) in order to enable rate limiting—no further configuration necessary.
 
+### Programmatic uploads (optional)
+
+Upload photos from local script:
+
+```sh
+export ADMIN_EMAIL=... ADMIN_PASSWORD=...
+node scripts/photo-import.mjs --base https://photos.example.com upload photo.jpg
+node scripts/photo-import.mjs --base https://photos.example.com list
+```
+
+Requires Node.js v22 or later. Works with Vercel Blob, S3, Cloudflare R2, or MinIO; image bytes go directly to storage, as with admin uploads (Vercel Blob uses this repo's installed `@vercel/blob` package). Script signs in with existing admin credentials; no required server setup:
+
+Uploads are private by default (`--visibility default` sets the same options as the admin photo form) and not idempotent: use `list` to check the result before retrying an uncertain upload.
+
+See [script notes](scripts/README.md) for details.
+
 ### Categories
 - `NEXT_PUBLIC_CATEGORY_VISIBILITY`
   - Comma-separated value controlling which photo sets appear in grid sidebar and CMD-K menu, and in what order. For example, you could move cameras above tags, and hide film simulations, by updating to `cameras,tags,lenses,recipes`.
@@ -211,8 +233,11 @@ Create Upstash Redis store from storage tab of Vercel dashboard and link to your
 - `NEXT_PUBLIC_SHOW_LARGE_THUMBNAILS = 1` ensures large thumbnails on photo grid views (if not configured, density is based on aspect ratio)
 
 ### Design
+- `NEXT_PUBLIC_DISABLE_EXPRESSIVE_LAYOUT = 1` disables floating home page layouts, harmonized for vertical and horizontal photos
 - `NEXT_PUBLIC_DEFAULT_THEME = light | dark` sets preferred initial theme (defaults to `system` when not configured)
 - `NEXT_PUBLIC_DISABLE_UPPERCASE_TITLES = 1` prevents photo titles and captions displaying in uppercase
+- `NEXT_PUBLIC_DISABLE_SERIF_FONT = 1` prevents photo titles from displaying in serif
+- `NEXT_PUBLIC_SHOW_PHOTO_COLOR_BARS = 1` shows photo color bars
 - `NEXT_PUBLIC_MATTE_PHOTOS = 1` constrains the size of each photo, and displays a surrounding border, potentially useful for photos with tall aspect ratios (colors can be customized via `NEXT_PUBLIC_MATTE_COLOR` + `NEXT_PUBLIC_MATTE_COLOR_DARK`)
 - `NEXT_PUBLIC_TINT_FOLDERS = 1` shows tinted folders on /library page
 - `NEXT_PUBLIC_HIGH_DENSITY_PREVIEWS = 1` shows up to 6 photos in category image hovers and OG images (max defaults to 5)
@@ -499,6 +524,15 @@ Thank you ❤️ translators: [@sconetto](https://github.com/sconetto) (`pt-br`,
 
 #### Why aren't Fujifilm simulations importing alongside EXIF data?
 > Fujifilm simulation data is stored in vendor-specific Makernote binaries embedded in EXIF data. Under certain circumstances an intermediary may strip out this data. For instance, there is a known issue on iOS where editing an image, e.g., cropping it, causes Makernote data loss. If simulation data appears to be missing, try importing the original file as it was stored by the camera. Additionally, if you can confirm the simulation mode, you can edit the photo and manually select it.
+
+#### How do OM SYSTEM and Olympus recipes work?
+
+> Upload camera-original JPEGs taken with a Color or Monochrome Profile. The photo's "Color recipe" or "Mono recipe" link opens a gallery of photos with matching settings, and the adjacent + button shows the settings themselves. Ordinary picture modes and Art Filters don't produce recipes, and profile slot numbers, exposure compensation, Noise Filter, and Gradation don't affect matching. As with Fujifilm, editing an image on your phone before uploading can strip the data recipes depend on.
+>
+> OM SYSTEM and Olympus photos uploaded before recipe support are flagged in `/admin/photos` until they're synced once.
+
+#### How are recipes titled?
+> When a Fujifilm or OM photo is imported, it uses the custom title already given to photos with matching recipe settings (and film simulation, for Fujifilm). Otherwise, Fujifilm recipes stay untitled, and their settings can be viewed from the film simulation's + button. OM recipes are labeled "Color recipe" or "Mono recipe," and the "auto-title" checkbox next to an OM photo's recipe title switches back to this label after a custom title has been set. Changing a recipe title on a photo renames it on every photo that shares it, and the form shows how many photos will be affected before saving.
 
 #### My Fujifilm recipes are missing/displaying incorrect data. What should I do?
 > If you don't see a recipe, first try syncing your photo from the ••• menu, or from `/admin/photos`. If the data looks incorrect, open an issue with the file in question attached in order for it to be investigated. Fujifilm file specifications have evolved over time and recipe parsing may need to be adjusted based on camera model/vintage.

@@ -25,6 +25,9 @@ export const PATH_GRID_INFERRED = GRID_HOMEPAGE_ENABLED
 export const PATH_FULL_INFERRED = GRID_HOMEPAGE_ENABLED
   ? PATH_FULL
   : PATH_ROOT;
+export const PATH_HOME_INFERRED = GRID_HOMEPAGE_ENABLED
+  ? PATH_ROOT
+  : PATH_FULL_INFERRED;
 
 // Modifiers
 const EDIT = 'edit';
@@ -284,7 +287,7 @@ export const ABSOLUTE_PATH_GRID =
   `${getBaseUrl()}${PATH_GRID}`;
 
 export const ABSOLUTE_PATH_FULL =
-  `${getBaseUrl()}${PATH_FULL}`;
+  `${getBaseUrl()}${PATH_FULL_INFERRED}`;
 
 export const ABSOLUTE_PATH_FEED_JSON =
   `${getBaseUrl()}${PATH_FEED_JSON}`;
@@ -513,6 +516,14 @@ export const isPathAdminConfiguration = (pathname?: string) =>
 export const isPathAdminInfo = (pathname?: string) =>
   isPathAdminInsights(pathname) ||
   isPathAdminConfiguration(pathname);
+
+// Accept /photos/* and /t/* paths, but serve /p/* and /tag/*
+export const getPathAliasTarget = (pathname = '') => {
+  const photo = pathname.match(/^\/photos\/(.+)$/)?.[1];
+  if (photo) { return `${PREFIX_PHOTO}/${photo}`; }
+  const tag = pathname.match(/^\/t\/(.+)$/)?.[1];
+  if (tag) { return `${PREFIX_TAG}/${tag}`; }
+};
 
 export const isPathProtected = (pathname?: string) =>
   checkPathPrefix(pathname, PATH_ADMIN) ||

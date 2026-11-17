@@ -5,13 +5,20 @@ import LinkWithStatus from '@/components/LinkWithStatus';
 import { useState } from 'react';
 import { Library, LibraryInsert, getLibraryMeta } from '.';
 import FieldsetWithStatus from '@/components/FieldsetWithStatus';
-import AdminChildPage from '@/components/AdminChildPage';
-import { updateLibraryAction } from './actions';
+import AdminPage from '@/admin/AdminPage';
+import {
+  getLibraryDescriptionPreviewAction,
+  updateLibraryAction,
+} from './actions';
+import LibraryDescription from './LibraryDescription';
 import SubmitButtonWithStatus from '@/components/SubmitButtonWithStatus';
 import { Photo } from '@/photo';
 import { useAppText } from '@/i18n/state/client';
 import FieldsetPhotoChooser from '@/photo/form/FieldsetPhotoChooser';
 import { LIBRARY_DESCRIPTION_DEFAULT } from '@/app/config';
+import RichTextEditor from '@/components/rich-text/RichTextEditor';
+import { Albums } from '@/album';
+import { Tags } from '@/tag';
 
 export default function AdminLibraryEditPage({
   library,
@@ -19,12 +26,16 @@ export default function AdminLibraryEditPage({
   photos,
   photosCount,
   photosFavs,
+  albums,
+  tags,
 }: {
   library?: Library
   photoAvatar?: Photo
   photos: Photo[]
   photosCount: number
   photosFavs: Photo[]
+  albums: Albums
+  tags: Tags
   shouldResizeImages?: boolean
 }) {
   const appText = useAppText();
@@ -38,13 +49,13 @@ export default function AdminLibraryEditPage({
   } = getLibraryMeta(appText);
 
   return (
-    <AdminChildPage
+    <AdminPage
       backPath={PATH_LIBRARY}
       backLabel="Library"
       breadcrumb="Edit Library Page"
     >
       <form
-        className="space-y-12 mt-12"
+        className="space-y-12 mt-6"
         action={updateLibraryAction}
       >
         <div className="space-y-4">
@@ -73,13 +84,19 @@ export default function AdminLibraryEditPage({
             onChange={subhead => setLibraryForm(form =>
               ({ ...form, subhead }))}
           />
-          <FieldsetWithStatus
+          <RichTextEditor
+            id="description"
             label="Description"
-            type="textarea"
             value={libraryForm?.description ?? ''}
-            placeholder={LIBRARY_DESCRIPTION_DEFAULT}
+            placeholder={LIBRARY_DESCRIPTION_DEFAULT ||
+              'Type @ to link photos, albums, and tags'}
             onChange={description => setLibraryForm(form =>
               ({ ...form, description }))}
+            mentionAlbums={albums}
+            mentionTags={tags}
+            getPreview={description =>
+              getLibraryDescriptionPreviewAction(description)
+                .then(content => <LibraryDescription content={content} />)}
           />
         </div>
         <div className="flex gap-2">
@@ -97,6 +114,6 @@ export default function AdminLibraryEditPage({
           </SubmitButtonWithStatus>
         </div>
       </form>
-    </AdminChildPage>
+    </AdminPage>
   );
 }

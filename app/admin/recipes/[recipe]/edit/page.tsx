@@ -1,4 +1,4 @@
-import AdminChildPage from '@/components/AdminChildPage';
+import AdminPage from '@/admin/AdminPage';
 import { redirect } from 'next/navigation';
 import { getPhotosCached, getPhotosMetaCached } from '@/photo/cache';
 import { PATH_ADMIN, PATH_ADMIN_RECIPES, pathForRecipe } from '@/app/path';
@@ -25,8 +25,8 @@ export default async function RecipePageEdit({
     { count },
     photos,
   ] = await Promise.all([
-    getPhotosMetaCached({ recipe }),
-    getPhotosCached({ recipe, limit: MAX_PHOTO_TO_SHOW }),
+    getPhotosMetaCached({ recipe, hidden: 'include' }),
+    getPhotosCached({ recipe, limit: MAX_PHOTO_TO_SHOW, hidden: 'include' }),
   ]);
 
   const { data, film } = getRecipePropsFromPhotos(photos) ?? {};
@@ -34,7 +34,7 @@ export default async function RecipePageEdit({
   if (count === 0) { redirect(PATH_ADMIN); }
 
   return (
-    <AdminChildPage
+    <AdminPage
       backPath={PATH_ADMIN_RECIPES}
       backLabel="Recipes"
       breadcrumb={<AdminRecipeBadge {...{ recipe, count, hideBadge: true }} />}
@@ -53,6 +53,6 @@ export default async function RecipePageEdit({
           moreLink={pathForRecipe(recipe)}
         />
       </AdminRecipeForm>
-    </AdminChildPage>
+    </AdminPage>
   );
 };
